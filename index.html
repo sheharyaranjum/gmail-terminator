@@ -368,11 +368,11 @@
 
       <label class="field-label">Search in</label>
       <div class="check-group" id="delete-location-checks">
-        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(this,'delete')"><input type="checkbox" checked/> Inbox</label>
-        <label class="check-chip" data-val="sent" onclick="toggleChip(this,'delete')"><input type="checkbox"/> Sent</label>
-        <label class="check-chip" data-val="spam" onclick="toggleChip(this,'delete')"><input type="checkbox"/> Spam</label>
-        <label class="check-chip" data-val="trash" onclick="toggleChip(this,'delete')"><input type="checkbox"/> Trash</label>
-        <label class="check-chip" data-val="anywhere" onclick="toggleChip(this,'delete')"><input type="checkbox"/> Everywhere</label>
+        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(event,this,'delete')"><input type="checkbox" checked/> Inbox</label>
+        <label class="check-chip" data-val="sent" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Sent</label>
+        <label class="check-chip" data-val="spam" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Spam</label>
+        <label class="check-chip" data-val="trash" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Trash</label>
+        <label class="check-chip" data-val="anywhere" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Everywhere</label>
       </div>
 
       <div class="btn-row">
@@ -397,11 +397,11 @@
 
       <label class="field-label">Search in</label>
       <div class="check-group" id="read-location-checks">
-        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(this,'read')"><input type="checkbox" checked/> Inbox</label>
-        <label class="check-chip" data-val="sent" onclick="toggleChip(this,'read')"><input type="checkbox"/> Sent</label>
-        <label class="check-chip" data-val="spam" onclick="toggleChip(this,'read')"><input type="checkbox"/> Spam</label>
-        <label class="check-chip" data-val="trash" onclick="toggleChip(this,'read')"><input type="checkbox"/> Trash</label>
-        <label class="check-chip" data-val="anywhere" onclick="toggleChip(this,'read')"><input type="checkbox"/> Everywhere</label>
+        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(event,this,'read')"><input type="checkbox" checked/> Inbox</label>
+        <label class="check-chip" data-val="sent" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Sent</label>
+        <label class="check-chip" data-val="spam" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Spam</label>
+        <label class="check-chip" data-val="trash" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Trash</label>
+        <label class="check-chip" data-val="anywhere" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Everywhere</label>
       </div>
 
       <div class="btn-row">
@@ -442,7 +442,8 @@ let pendingAction = null; // { type: 'delete'|'read', query, count }
 let selectedReadRange = 'all';
 
 // ── LOCATION CHIPS ───────────────────────────────────────────────────────────
-function toggleChip(chip, prefix) {
+function toggleChip(event, chip, prefix) {
+  event.preventDefault();
   const isAnywhere = chip.dataset.val === 'anywhere';
   const group = document.getElementById(`${prefix}-location-checks`);
   const allChips = [...group.querySelectorAll('.check-chip')];
