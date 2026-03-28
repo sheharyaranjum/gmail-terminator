@@ -582,6 +582,7 @@ async function gmailPost(path, body) {
     body: JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`Gmail API ${r.status}: ${await r.text()}`);
+  if (r.status === 204) return null;
   return r.json();
 }
 
@@ -664,8 +665,7 @@ async function countForDelete() {
   btn.innerHTML = 'Count emails';
 }
 
-async function executeDelete() {
-  const { query } = pendingAction;
+async function executeDelete(query) {
   const status = document.getElementById('delete-status');
   const log = document.getElementById('delete-log');
   const btn = document.getElementById('delete-count-btn');
@@ -746,8 +746,7 @@ async function countForRead() {
   btn.innerHTML = 'Count unread';
 }
 
-async function executeMarkRead() {
-  const { query } = pendingAction;
+async function executeMarkRead(query) {
   const status = document.getElementById('read-status');
   const log = document.getElementById('read-log');
   const btn = document.getElementById('read-count-btn');
@@ -786,10 +785,11 @@ function closeModal() {
 }
 
 async function modalConfirm() {
+  const action = pendingAction;
   closeModal();
-  if (!pendingAction) return;
-  if (pendingAction.type === 'delete') await executeDelete();
-  else if (pendingAction.type === 'read') await executeMarkRead();
+  if (!action) return;
+  if (action.type === 'delete') await executeDelete(action.query);
+  else if (action.type === 'read') await executeMarkRead(action.query);
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
