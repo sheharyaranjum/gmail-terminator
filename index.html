@@ -446,6 +446,96 @@
     border-radius: 2px;
     margin-top: 0.85rem;
   }
+
+  /* ── SENDER PANEL ── */
+  .sender-panel { display: none; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .sender-panel.show { display: block; }
+
+  .sender-panel-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .sender-panel-title {
+    display: block;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: -0.01em; margin-bottom: 0.5rem;
+  }
+  .sender-panel-controls { display: flex; gap: 0.5rem; align-items: center; }
+
+  .sender-search {
+    flex: 1; background: var(--card);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--ink);
+    outline: none; transition: border-color 0.15s;
+  }
+  .sender-search:focus { border-color: var(--accent2); }
+  .sender-search::placeholder { color: var(--muted); }
+
+  .sender-sort-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.4rem 0.7rem; font-family: var(--mono); font-size: 0.72rem;
+    color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .sender-sort-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .sender-select-all-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.55rem 1rem; border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 0.72rem;
+  }
+  .sender-select-all-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+  .sender-selected-count { color: var(--muted); font-size: 0.68rem; }
+
+  .sender-disclaimer {
+    padding: 0.35rem 1rem;
+    font-family: var(--mono); font-size: 0.63rem;
+    color: var(--muted); font-style: italic;
+    border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+
+  .sender-list { max-height: 280px; overflow-y: auto; }
+
+  .sender-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .sender-row:last-child { border-bottom: none; }
+  .sender-row:hover { background: var(--bg); }
+  .sender-row.selected { background: #eff6ff; }
+  .sender-row input[type="checkbox"] {
+    flex-shrink: 0; accent-color: var(--accent2);
+    width: 14px; height: 14px; cursor: pointer;
+  }
+
+  .sender-info { flex: 1; min-width: 0; }
+  .sender-name {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sender-email {
+    display: block; font-size: 0.65rem; font-family: var(--mono);
+    color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sender-count-badge {
+    flex-shrink: 0; font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 0.15rem 0.5rem; color: var(--muted);
+  }
+  .sender-row.selected .sender-count-badge { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+  .sender-empty {
+    padding: 1.5rem 1rem; text-align: center;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+  }
+
+  .sender-panel-footer {
+    display: flex; gap: 0.6rem;
+    padding: 0.75rem 1rem; border-top: 1px solid var(--border); background: var(--bg);
+  }
 </style>
 </head>
 <body>
@@ -512,6 +602,27 @@
       </div>
 
       <div class="status-box" id="delete-status"></div>
+      <div class="sender-panel" id="delete-sender-panel">
+        <div class="sender-panel-header">
+          <span class="sender-panel-title">Sender Breakdown</span>
+          <div class="sender-panel-controls">
+            <input type="text" class="sender-search" id="delete-sender-search" placeholder="Search by name or email…" oninput="filterSenders('delete')">
+            <button class="sender-sort-btn" id="delete-sort-btn" onclick="toggleSenderSort('delete')">Most first ↓</button>
+          </div>
+        </div>
+        <div class="sender-select-all-row">
+          <label class="sender-select-all-label">
+            <input type="checkbox" id="delete-select-all" onchange="toggleSelectAll('delete', this.checked)"> Select all
+          </label>
+          <span class="sender-selected-count" id="delete-selected-count">0 selected</span>
+        </div>
+        <div class="sender-disclaimer">Showing senders from the top 100 emails analyzed. Use filters to refine your scope.</div>
+        <div class="sender-list" id="delete-sender-list"></div>
+        <div class="sender-panel-footer">
+          <button class="btn btn-danger" id="delete-proceed-btn" onclick="proceedWithSelected('delete')" disabled>Proceed with selected</button>
+          <button class="btn btn-ghost" onclick="cancelSenderPanel('delete')">Cancel</button>
+        </div>
+      </div>
       <div class="progress-tracker" id="delete-progress">
         <div class="pt-header">
           <div class="pt-chevrons">
@@ -565,6 +676,27 @@
       </div>
 
       <div class="status-box" id="read-status"></div>
+      <div class="sender-panel" id="read-sender-panel">
+        <div class="sender-panel-header">
+          <span class="sender-panel-title">Sender Breakdown</span>
+          <div class="sender-panel-controls">
+            <input type="text" class="sender-search" id="read-sender-search" placeholder="Search by name or email…" oninput="filterSenders('read')">
+            <button class="sender-sort-btn" id="read-sort-btn" onclick="toggleSenderSort('read')">Most first ↓</button>
+          </div>
+        </div>
+        <div class="sender-select-all-row">
+          <label class="sender-select-all-label">
+            <input type="checkbox" id="read-select-all" onchange="toggleSelectAll('read', this.checked)"> Select all
+          </label>
+          <span class="sender-selected-count" id="read-selected-count">0 selected</span>
+        </div>
+        <div class="sender-disclaimer">Showing senders from the top 100 emails analyzed. Use filters to refine your scope.</div>
+        <div class="sender-list" id="read-sender-list"></div>
+        <div class="sender-panel-footer">
+          <button class="btn btn-primary" id="read-proceed-btn" onclick="proceedWithSelected('read')" disabled>Proceed with selected</button>
+          <button class="btn btn-ghost" onclick="cancelSenderPanel('read')">Cancel</button>
+        </div>
+      </div>
       <div class="progress-tracker" id="read-progress">
         <div class="pt-header">
           <div class="pt-chevrons">
@@ -872,14 +1004,8 @@ async function countForDelete() {
     appendLog(log, `Query: ${query}`);
     const count = await countMessages(query);
     appendLog(log, `Found: ${count} emails`);
-    setStatus(status, 'warn', `Found <strong>${count}</strong> emails in <em>${locationLabel}</em> before ${dateVal}. Ready to move to Trash.`);
-
-    pendingAction = { type: 'delete', query, count };
-    showModal(
-      '🗑 Confirm Bulk Delete',
-      `This will move ${count} emails in "${locationLabel}" (before ${dateVal}) to Trash. Gmail will auto-purge Trash after 30 days. Continue?`,
-      'Move to Trash'
-    );
+    setStatus(status, 'warn', `Found <strong>${count}</strong> emails in <em>${locationLabel}</em> before ${dateVal}. Analyzing senders…`);
+    await showSenderPanel('delete', query, 'delete', 'Move to Trash');
   } catch (e) {
     setStatus(status, 'warn', `Error: ${e.message}`);
     appendLog(log, `ERROR: ${e.message}`);
@@ -959,14 +1085,8 @@ async function countForRead() {
     const count = await countMessages(query);
     appendLog(log, `Found: ${count} unread`);
     const rangeLabel = { all: 'all unread', '30d': 'past 30 days', '7d': 'past 7 days', today: 'today' }[selectedReadRange];
-    setStatus(status, 'info', `Found <strong>${count}</strong> unread emails in <em>${locationLabel}</em> (${rangeLabel}).`);
-
-    pendingAction = { type: 'read', query, count };
-    showModal(
-      '✉️ Confirm Mark as Read',
-      `This will mark ${count} emails in "${locationLabel}" (${rangeLabel}) as read. Continue?`,
-      'Mark as Read'
-    );
+    setStatus(status, 'info', `Found <strong>${count}</strong> unread emails in <em>${locationLabel}</em> (${rangeLabel}). Analyzing senders…`);
+    await showSenderPanel('read', query, 'read', 'Mark as Read');
   } catch (e) {
     setStatus(status, 'warn', `Error: ${e.message}`);
     appendLog(log, `ERROR: ${e.message}`);
@@ -1094,6 +1214,166 @@ function ptComplete(prefix, total) {
 
 function ptHide(prefix) {
   document.getElementById(`${prefix}-progress`).classList.remove('show', 'active');
+}
+
+// ── SENDER BREAKDOWN ─────────────────────────────────────────────────────────
+const senderState = {};
+
+function parseSender(fromHeader) {
+  const match = fromHeader.match(/^"?([^"<]*?)"?\s*<([^>]+)>$/);
+  if (match) return { name: match[1].trim() || match[2].trim(), email: match[2].trim().toLowerCase() };
+  const plain = fromHeader.trim();
+  return { name: plain, email: plain.toLowerCase() };
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function fetchSenderBreakdown(query) {
+  const ids = [];
+  for await (const id of listMessages(query)) {
+    ids.push(id);
+    if (ids.length >= 100) break;
+  }
+  const map = {};
+  const BATCH = 20;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const chunk = ids.slice(i, i + BATCH);
+    const results = await Promise.all(
+      chunk.map(id => gmailGet(`messages/${id}?format=metadata&metadataHeaders=From`))
+    );
+    for (const msg of results) {
+      const fromVal = (msg.payload?.headers || []).find(h => h.name === 'From')?.value || '';
+      const { name, email } = parseSender(fromVal);
+      if (!map[email]) map[email] = { name, email, count: 0, selected: false };
+      map[email].count++;
+    }
+  }
+  return Object.values(map).sort((a, b) => b.count - a.count);
+}
+
+async function showSenderPanel(prefix, query, type, confirmLabel) {
+  const panel = document.getElementById(`${prefix}-sender-panel`);
+  const status = document.getElementById(`${prefix}-status`);
+  panel.classList.remove('show');
+  try {
+    const senders = await fetchSenderBreakdown(query);
+    senderState[prefix] = { senders, sortAsc: false, query, type, confirmLabel };
+    document.getElementById(`${prefix}-sender-search`).value = '';
+    document.getElementById(`${prefix}-select-all`).checked = false;
+    document.getElementById(`${prefix}-select-all`).indeterminate = false;
+    document.getElementById(`${prefix}-selected-count`).textContent = '0 selected';
+    document.getElementById(`${prefix}-proceed-btn`).disabled = true;
+    document.getElementById(`${prefix}-sort-btn`).textContent = 'Most first ↓';
+    renderSenderList(prefix);
+    status.className = 'status-box';
+    panel.classList.add('show');
+  } catch (e) {
+    setStatus(status, 'warn', `Error analyzing senders: ${e.message}`);
+  }
+}
+
+function renderSenderList(prefix) {
+  const state = senderState[prefix];
+  const list = document.getElementById(`${prefix}-sender-list`);
+  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
+  let senders = [...state.senders];
+  if (search) senders = senders.filter(s => s.name.toLowerCase().includes(search) || s.email.includes(search));
+  if (state.sortAsc) senders.sort((a, b) => a.count - b.count);
+  const visible = senders.slice(0, 20);
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="sender-empty">No senders match your search.</div>';
+    updateSelectedCount(prefix);
+    return;
+  }
+  list.innerHTML = visible.map(s => `
+    <div class="sender-row${s.selected ? ' selected' : ''}" data-email="${escHtml(s.email)}" onclick="toggleSenderRow('${prefix}', this)">
+      <input type="checkbox"${s.selected ? ' checked' : ''} onclick="event.stopPropagation()">
+      <div class="sender-info">
+        <span class="sender-name">${escHtml(s.name)}</span>
+        <span class="sender-email">${escHtml(s.email)}</span>
+      </div>
+      <span class="sender-count-badge">${s.count}</span>
+    </div>`).join('');
+  updateSelectedCount(prefix);
+}
+
+function toggleSenderRow(prefix, row) {
+  const email = row.dataset.email;
+  const sender = senderState[prefix].senders.find(s => s.email === email);
+  if (!sender) return;
+  sender.selected = !sender.selected;
+  row.classList.toggle('selected', sender.selected);
+  row.querySelector('input[type="checkbox"]').checked = sender.selected;
+  updateSelectedCount(prefix);
+}
+
+function toggleSelectAll(prefix, checked) {
+  const state = senderState[prefix];
+  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
+  state.senders.forEach(s => {
+    const visible = !search || s.name.toLowerCase().includes(search) || s.email.includes(search);
+    if (visible) s.selected = checked;
+  });
+  renderSenderList(prefix);
+}
+
+function filterSenders(prefix) { renderSenderList(prefix); }
+
+function toggleSenderSort(prefix) {
+  const state = senderState[prefix];
+  state.sortAsc = !state.sortAsc;
+  document.getElementById(`${prefix}-sort-btn`).textContent = state.sortAsc ? 'Least first ↑' : 'Most first ↓';
+  renderSenderList(prefix);
+}
+
+function updateSelectedCount(prefix) {
+  const state = senderState[prefix];
+  const total = state.senders.filter(s => s.selected).length;
+  document.getElementById(`${prefix}-selected-count`).textContent = `${total} selected`;
+  document.getElementById(`${prefix}-proceed-btn`).disabled = total === 0;
+  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
+  const visible = state.senders.filter(s => !search || s.name.toLowerCase().includes(search) || s.email.includes(search)).slice(0, 20);
+  const allChecked = visible.length > 0 && visible.every(s => s.selected);
+  const someChecked = visible.some(s => s.selected);
+  const cb = document.getElementById(`${prefix}-select-all`);
+  cb.checked = allChecked;
+  cb.indeterminate = !allChecked && someChecked;
+}
+
+async function proceedWithSelected(prefix) {
+  const state = senderState[prefix];
+  const selected = state.senders.filter(s => s.selected);
+  if (selected.length === 0) return;
+  const senderQ = selected.length === 1
+    ? `from:${selected[0].email}`
+    : `{${selected.map(s => `from:${s.email}`).join(' ')}}`;
+  const combinedQuery = `${state.query} ${senderQ}`;
+  const panel = document.getElementById(`${prefix}-sender-panel`);
+  const status = document.getElementById(`${prefix}-status`);
+  panel.classList.remove('show');
+  setStatus(status, 'info', '⏳ Counting emails for selected senders…');
+  try {
+    const count = await countMessages(combinedQuery);
+    const label = selected.length <= 3 ? selected.map(s => s.name || s.email).join(', ') : `${selected.length} senders`;
+    pendingAction = { type: state.type, query: combinedQuery, count };
+    setStatus(status, 'info', `Found <strong>${count}</strong> emails from <em>${escHtml(label)}</em>.`);
+    showModal(
+      state.type === 'delete' ? '🗑 Confirm Bulk Delete' : '✉️ Confirm Mark as Read',
+      `This will ${state.type === 'delete' ? 'move to Trash' : 'mark as read'} ${count} emails from ${label}. Continue?`,
+      state.confirmLabel
+    );
+  } catch (e) {
+    setStatus(status, 'warn', `Error: ${e.message}`);
+    panel.classList.add('show');
+  }
+}
+
+function cancelSenderPanel(prefix) {
+  document.getElementById(`${prefix}-sender-panel`).classList.remove('show');
+  document.getElementById(`${prefix}-status`).className = 'status-box';
+  document.getElementById(`${prefix}-log`).className = 'log';
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
