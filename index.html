@@ -314,6 +314,138 @@
   }
   .check-chip.checked::before { content: '✓ '; font-size: 0.65rem; }
   .check-chip.dimmed { opacity: 0.38; pointer-events: none; }
+
+  /* ── PROGRESS TRACKER ── */
+  .progress-tracker {
+    display: none;
+    margin-top: 1rem;
+    font-family: var(--mono);
+  }
+  .progress-tracker.show { display: block; }
+
+  .pt-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .pt-chevrons {
+    position: relative;
+    width: 24px;
+    height: 52px;
+    flex-shrink: 0;
+    margin-top: -10px;
+  }
+  .pt-chevron {
+    position: absolute;
+    left: 0;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pt-chevron-1 { top: 0; opacity: 0.7; }
+  .pt-chevron-2 { top: 14px; opacity: 0.5; }
+  @keyframes pt-bounce-1 {
+    0%, 100% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(8px); opacity: 0.9; }
+  }
+  @keyframes pt-bounce-2 {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(8px); opacity: 1; }
+  }
+  .progress-tracker.active .pt-chevron-1 {
+    animation: pt-bounce-1 1.5s ease-in-out infinite;
+  }
+  .progress-tracker.active .pt-chevron-2 {
+    animation: pt-bounce-2 1.5s ease-in-out infinite 0.3s;
+  }
+
+  .pt-banner-label {
+    background: var(--ink);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    padding: 0.3rem 1.3rem 0.3rem 0.8rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 110px;
+  }
+
+  .pt-dots { display: none; }
+  .progress-tracker.active .pt-dots { display: inline-flex; }
+  .pt-dot { opacity: 0; }
+  @keyframes pt-dot {
+    0%, 100% { opacity: 0; }
+    40%, 60% { opacity: 1; }
+  }
+  .progress-tracker.active .pt-dot:nth-child(1) { animation: pt-dot 1.5s ease-in-out infinite 0.1s; }
+  .progress-tracker.active .pt-dot:nth-child(2) { animation: pt-dot 1.5s ease-in-out infinite 0.3s; }
+  .progress-tracker.active .pt-dot:nth-child(3) { animation: pt-dot 1.5s ease-in-out infinite 0.5s; }
+
+  .pt-separator {
+    width: 100%;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px;
+    margin-bottom: 0.55rem;
+  }
+
+  .pt-labels, .pt-values {
+    display: flex;
+    align-items: center;
+  }
+  .pt-labels { margin-bottom: 0.25rem; }
+  .pt-col-bar { width: 110px; flex-shrink: 0; }
+  .pt-col-time { width: 118px; flex-shrink: 0; padding-left: 16px; }
+  .pt-col-count { padding-left: 16px; }
+  .pt-labels span {
+    font-size: 0.58rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .pt-bar-track {
+    width: 100%;
+    height: 10px;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    padding: 1px;
+    background: transparent;
+    overflow: hidden;
+  }
+  .pt-bar-fill {
+    height: 100%;
+    background: var(--ink);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.4s ease-out;
+  }
+  @keyframes pt-slide {
+    0% { transform: translateX(-200%); }
+    100% { transform: translateX(500%); }
+  }
+  .pt-bar-fill.collecting {
+    width: 20%;
+    transition: none;
+    animation: pt-slide 1.2s ease-in-out infinite;
+  }
+
+  .pt-time-val, .pt-count-val { font-size: 0.8rem; }
+
+  .pt-footer-line {
+    width: 75%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-top: 0.85rem;
+  }
 </style>
 </head>
 <body>
@@ -380,6 +512,30 @@
       </div>
 
       <div class="status-box" id="delete-status"></div>
+      <div class="progress-tracker" id="delete-progress">
+        <div class="pt-header">
+          <div class="pt-chevrons">
+            <svg class="pt-chevron pt-chevron-1" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg class="pt-chevron pt-chevron-2" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="pt-banner-label">
+            <span class="pt-banner-text">READY</span>
+            <span class="pt-dots"><span class="pt-dot">.</span><span class="pt-dot">.</span><span class="pt-dot">.</span></span>
+          </div>
+        </div>
+        <div class="pt-separator"></div>
+        <div class="pt-labels">
+          <div class="pt-col-bar"><span>Progress</span></div>
+          <div class="pt-col-time"><span>Est. Time</span></div>
+          <div class="pt-col-count"><span>Emails:</span></div>
+        </div>
+        <div class="pt-values">
+          <div class="pt-col-bar"><div class="pt-bar-track"><div class="pt-bar-fill"></div></div></div>
+          <div class="pt-col-time"><span class="pt-time-val">—</span></div>
+          <div class="pt-col-count"><span class="pt-count-val">0</span></div>
+        </div>
+        <div class="pt-footer-line"></div>
+      </div>
       <div class="log" id="delete-log"></div>
     </div>
 
@@ -409,6 +565,30 @@
       </div>
 
       <div class="status-box" id="read-status"></div>
+      <div class="progress-tracker" id="read-progress">
+        <div class="pt-header">
+          <div class="pt-chevrons">
+            <svg class="pt-chevron pt-chevron-1" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg class="pt-chevron pt-chevron-2" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="pt-banner-label">
+            <span class="pt-banner-text">READY</span>
+            <span class="pt-dots"><span class="pt-dot">.</span><span class="pt-dot">.</span><span class="pt-dot">.</span></span>
+          </div>
+        </div>
+        <div class="pt-separator"></div>
+        <div class="pt-labels">
+          <div class="pt-col-bar"><span>Progress</span></div>
+          <div class="pt-col-time"><span>Est. Time</span></div>
+          <div class="pt-col-count"><span>Emails:</span></div>
+        </div>
+        <div class="pt-values">
+          <div class="pt-col-bar"><div class="pt-bar-track"><div class="pt-bar-fill"></div></div></div>
+          <div class="pt-col-time"><span class="pt-time-val">—</span></div>
+          <div class="pt-col-count"><span class="pt-count-val">0</span></div>
+        </div>
+        <div class="pt-footer-line"></div>
+      </div>
       <div class="log" id="read-log"></div>
     </div>
 
@@ -427,13 +607,15 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 // Users need to create their own Google OAuth Client ID at
 // console.cloud.google.com → APIs & Services → Credentials
 // Set Authorized JS origins to the domain this page is hosted on.
 // For testing locally, use http://localhost as origin.
-const CLIENT_ID = '304947933240-tobpbij66c0afhubd0bp1v5rhr2oec07.apps.googleusercontent.com'; // <-- replace this
+// CLIENT_ID and CLIENT_SECRET are loaded from config.js (gitignored)
+// Copy config.example.js → config.js and fill in your credentials
 const SCOPES = 'https://www.googleapis.com/auth/gmail.modify';
 
 // ── STATE ───────────────────────────────────────────────────────────────────
@@ -487,23 +669,35 @@ function getLocationLabel(prefix) {
 }
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
-function signIn() {
-  if (CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-    alert('No Client ID set. Please replace YOUR_GOOGLE_CLIENT_ID in the code.');
-    return;
-  }
+function pkceVerifier() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function pkceChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function signIn() {
   const redirectUri = location.origin + location.pathname;
+  const verifier = pkceVerifier();
+  const challenge = await pkceChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier', verifier);
+
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: redirectUri,
-    response_type: 'token',
+    response_type: 'code',
     scope: SCOPES,
+    code_challenge: challenge,
+    code_challenge_method: 'S256',
     prompt: 'select_account',
+    access_type: 'online',
   });
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  console.log('Redirect URI:', redirectUri);
-  console.log('Auth URL:', authUrl);
-  window.location.href = authUrl;
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
 function signOut() {
@@ -514,14 +708,40 @@ function signOut() {
 }
 
 async function handleOAuthCallback() {
-  const hash = new URLSearchParams(location.hash.slice(1));
-  const token = hash.get('access_token');
-  if (token) {
-    accessToken = token;
-    sessionStorage.setItem('gmail_token', token);
+  // PKCE auth code flow: code arrives as a query param
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  if (code) {
+    const verifier = sessionStorage.getItem('pkce_verifier');
+    sessionStorage.removeItem('pkce_verifier');
     history.replaceState(null, '', location.pathname);
-    const email = await fetchUserEmail();
-    showApp(email);
+    try {
+      const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: CLIENT_ID,
+          client_secret: CLIENT_SECRET,
+          redirect_uri: location.origin + location.pathname,
+          code_verifier: verifier,
+          grant_type: 'authorization_code',
+        }),
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        accessToken = data.access_token;
+        sessionStorage.setItem('gmail_token', accessToken);
+        const email = await fetchUserEmail();
+        showApp(email);
+      } else {
+        console.error('Token exchange failed:', data);
+        showAuth();
+      }
+    } catch (e) {
+      console.error('Token exchange error:', e);
+      showAuth();
+    }
     return;
   }
   // Check session
@@ -613,14 +833,15 @@ async function* listMessages(query) {
 }
 
 // Batch modify (trash or mark read) up to 1000 at a time
-async function batchModify(ids, addLabels = [], removeLabels = []) {
-  for (let i = 0; i < ids.length; i += 1000) {
-    const chunk = ids.slice(i, i + 1000);
+async function batchModify(ids, addLabels = [], removeLabels = [], onProgress = null) {
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
     await gmailPost('messages/batchModify', {
       ids: chunk,
       addLabelIds: addLabels,
       removeLabelIds: removeLabels,
     });
+    if (onProgress) onProgress(Math.min(i + 100, ids.length), ids.length);
   }
 }
 
@@ -636,6 +857,7 @@ async function countForDelete() {
   const btn = document.getElementById('delete-count-btn');
   const status = document.getElementById('delete-status');
   const log = document.getElementById('delete-log');
+  ptHide('delete');
 
   btn.disabled = true;
   btn.innerHTML = `<span class="spin"></span> Counting…`;
@@ -675,15 +897,20 @@ async function executeDelete(query) {
   setStatus(status, 'info', '⏳ Deleting…');
   log.className = 'log show';
   appendLog(log, 'Collecting message IDs…');
+  ptShow('delete');
 
   try {
     const ids = [];
     for await (const id of listMessages(query)) ids.push(id);
     appendLog(log, `Collected ${ids.length} IDs. Moving to trash…`);
-    await batchModify(ids, ['TRASH'], []);
+    ptStartProcessing('delete');
+    const t0 = Date.now();
+    await batchModify(ids, ['TRASH'], [], (done, total) => ptUpdate('delete', done, total, t0));
+    ptComplete('delete', ids.length);
     setStatus(status, 'success', `✓ Done! ${ids.length} emails moved to Trash.`);
     appendLog(log, `✓ Complete. ${ids.length} emails trashed.`);
   } catch (e) {
+    ptHide('delete');
     setStatus(status, 'warn', `Error: ${e.message}`);
     appendLog(log, `ERROR: ${e.message}`);
   }
@@ -715,6 +942,7 @@ async function countForRead() {
   const btn = document.getElementById('read-count-btn');
   const status = document.getElementById('read-status');
   const log = document.getElementById('read-log');
+  ptHide('read');
 
   btn.disabled = true;
   btn.innerHTML = `<span class="spin"></span> Counting…`;
@@ -756,15 +984,20 @@ async function executeMarkRead(query) {
   setStatus(status, 'info', '⏳ Marking as read…');
   log.className = 'log show';
   appendLog(log, 'Collecting unread message IDs…');
+  ptShow('read');
 
   try {
     const ids = [];
     for await (const id of listMessages(query)) ids.push(id);
     appendLog(log, `Collected ${ids.length} IDs. Marking read…`);
-    await batchModify(ids, [], ['UNREAD']);
+    ptStartProcessing('read');
+    const t0 = Date.now();
+    await batchModify(ids, [], ['UNREAD'], (done, total) => ptUpdate('read', done, total, t0));
+    ptComplete('read', ids.length);
     setStatus(status, 'success', `✓ Done! ${ids.length} emails marked as read.`);
     appendLog(log, `✓ Complete. ${ids.length} emails marked read.`);
   } catch (e) {
+    ptHide('read');
     setStatus(status, 'warn', `Error: ${e.message}`);
     appendLog(log, `ERROR: ${e.message}`);
   }
@@ -802,6 +1035,65 @@ function setStatus(el, type, html) {
 function appendLog(el, msg) {
   el.textContent += msg + '\n';
   el.scrollTop = el.scrollHeight;
+}
+
+// ── PROGRESS TRACKER ─────────────────────────────────────────────────────────
+const PT_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function ptScramble(el, target) {
+  const total = target.length * 10;
+  let iter = 0;
+  clearInterval(el._si);
+  el._si = setInterval(() => {
+    el.textContent = target.split('').map((l, i) =>
+      i <= Math.floor(iter / 10) ? l : PT_CHARS[Math.floor(Math.random() * 26)]
+    ).join('');
+    if (++iter > total) { el.textContent = target; clearInterval(el._si); }
+  }, Math.max(25, Math.round(800 / total)));
+}
+
+function ptShow(prefix) {
+  const el = document.getElementById(`${prefix}-progress`);
+  const fill = el.querySelector('.pt-bar-fill');
+  fill.className = 'pt-bar-fill collecting';
+  fill.style.width = '';
+  el.querySelector('.pt-time-val').textContent = '—';
+  el.querySelector('.pt-count-val').textContent = '0';
+  el.classList.add('show', 'active');
+  ptScramble(el.querySelector('.pt-banner-text'), 'COLLECTING');
+}
+
+function ptStartProcessing(prefix) {
+  const el = document.getElementById(`${prefix}-progress`);
+  const fill = el.querySelector('.pt-bar-fill');
+  fill.className = 'pt-bar-fill';
+  fill.style.width = '0%';
+  ptScramble(el.querySelector('.pt-banner-text'), 'PROCESSING');
+}
+
+function ptUpdate(prefix, processed, total, startTime) {
+  const el = document.getElementById(`${prefix}-progress`);
+  el.querySelector('.pt-bar-fill').style.width = Math.min(100, Math.round(processed / total * 100)) + '%';
+  el.querySelector('.pt-count-val').textContent = processed.toLocaleString();
+  if (processed > 0) {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remaining = Math.max(0, Math.round(elapsed / processed * (total - processed)));
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    el.querySelector('.pt-time-val').textContent = `${m}min ${String(s).padStart(2, '0')}sec`;
+  }
+}
+
+function ptComplete(prefix, total) {
+  const el = document.getElementById(`${prefix}-progress`);
+  el.querySelector('.pt-bar-fill').style.width = '100%';
+  el.querySelector('.pt-count-val').textContent = total.toLocaleString();
+  el.querySelector('.pt-time-val').textContent = '0min 00sec';
+  el.classList.remove('active');
+  ptScramble(el.querySelector('.pt-banner-text'), 'COMPLETE');
+}
+
+function ptHide(prefix) {
+  document.getElementById(`${prefix}-progress`).classList.remove('show', 'active');
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
