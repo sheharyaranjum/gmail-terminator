@@ -1288,8 +1288,8 @@ function renderSenderList(prefix) {
     return;
   }
   list.innerHTML = visible.map(s => `
-    <div class="sender-row${s.selected ? ' selected' : ''}" data-email="${escHtml(s.email)}" onclick="toggleSenderRow('${prefix}', this)">
-      <input type="checkbox"${s.selected ? ' checked' : ''} onclick="event.stopPropagation()">
+    <div class="sender-row${s.selected ? ' selected' : ''}" data-email="${escHtml(s.email)}">
+      <input type="checkbox"${s.selected ? ' checked' : ''} onchange="toggleSenderRow('${prefix}', this.closest('.sender-row'))">
       <div class="sender-info">
         <span class="sender-name">${escHtml(s.name)}</span>
         <span class="sender-email">${escHtml(s.email)}</span>
