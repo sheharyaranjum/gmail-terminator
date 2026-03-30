@@ -3,564 +3,568 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Gmail Manager</title>
+<title>Gmail Terminator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --bg: #f5f2ee;
-    --card: #ffffff;
-    --ink: #1a1612;
-    --muted: #8a857e;
-    --accent: #d4380d;
-    --accent2: #0958d9;
-    --border: #e0dbd4;
-    --tag-bg: #fff7e6;
-    --tag-border: #ffd591;
-    --success-bg: #f6ffed;
-    --success: #389e0d;
-    --warn-bg: #fff2e8;
-    --warn: #d4380d;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── VARIABLES ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:         #f5f2ee;
+  --surface:    #ffffff;
+  --ink:        #1a1612;
+  --muted:      #8a857e;
+  --border:     #e4dfd8;
+  --danger:     #d4380d;
+  --danger-bg:  #fff2e8;
+  --success:    #389e0d;
+  --sans:       'Syne', sans-serif;
+  --mono:       'DM Mono', monospace;
+  --r:          12px;
+  --r-sm:       6px;
+  --r-pill:     999px;
+}
 
-  body {
-    background: var(--bg);
-    font-family: var(--sans);
-    color: var(--ink);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+/* ── RESET ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* noise overlay */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0;
-  }
+body {
+  background: var(--bg);
+  font-family: var(--sans);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-  header {
-    padding: 2rem 2rem 1rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-    position: relative; z-index: 1;
-    display: flex; align-items: center; gap: 1rem;
-  }
+/* noise texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+header, main, #action-bar, #modal-overlay, #progress-overlay { position: relative; z-index: 1; }
 
-  .logo {
-    width: 36px; height: 36px;
-    background: var(--accent);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 1rem; font-weight: 800;
-    flex-shrink: 0;
-  }
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
 
-  .header-text h1 {
-    font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em;
-  }
+.logo {
+  width: 30px; height: 30px;
+  background: var(--ink);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 0.8rem; font-weight: 800;
+  flex-shrink: 0;
+}
 
-  .header-text p {
-    font-size: 0.72rem; color: var(--muted);
-    font-family: var(--mono); margin-top: 1px;
-  }
+.header-title { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.02em; }
+.header-sub   { font-size: 0.65rem; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
 
-  #user-pill {
-    margin-left: auto;
-    display: none;
-    align-items: center; gap: 0.5rem;
-    background: var(--tag-bg);
-    border: 1px solid var(--tag-border);
-    border-radius: 999px;
-    padding: 0.3rem 0.8rem 0.3rem 0.4rem;
-    font-size: 0.72rem; font-family: var(--mono);
-  }
+#user-pill {
+  margin-left: auto;
+  display: none;
+  align-items: center; gap: 0.45rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 0.22rem 0.7rem 0.22rem 0.3rem;
+  font-size: 0.68rem; font-family: var(--mono);
+}
 
-  #user-pill .avatar {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--accent); color: white;
-    font-size: 0.6rem; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
+.user-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--ink); color: white;
+  font-size: 0.58rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
 
-  #sign-out-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--muted); font-size: 0.65rem; font-family: var(--mono);
-    text-decoration: underline; padding: 0; margin-left: 0.3rem;
-  }
+#sign-out-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 0.63rem; font-family: var(--mono);
+  text-decoration: underline; padding: 0; margin-left: 0.15rem;
+}
 
-  main {
-    flex: 1; padding: 2rem;
-    max-width: 640px; margin: 0 auto; width: 100%;
-    position: relative; z-index: 1;
-  }
+/* ── MAIN ───────────────────────────────────────────────────────────────────── */
+main {
+  flex: 1;
+  padding: 1.5rem 1.5rem 6rem;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
 
-  /* ── Auth screen ── */
-  #auth-screen {
-    text-align: center;
-    padding: 3rem 1rem;
-  }
+/* ── AUTH SCREEN ────────────────────────────────────────────────────────────── */
+#auth-screen {
+  text-align: center;
+  padding: 5rem 1rem;
+}
 
-  #auth-screen h2 {
-    font-size: 2rem; font-weight: 800; letter-spacing: -0.04em;
-    margin-bottom: 0.5rem;
-  }
+#auth-screen h2 {
+  font-size: 2.4rem; font-weight: 800;
+  letter-spacing: -0.04em; line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
 
-  #auth-screen p {
-    color: var(--muted); font-size: 0.85rem;
-    line-height: 1.7; max-width: 340px; margin: 0 auto 2rem;
-  }
+#auth-screen .sub {
+  color: var(--muted); font-size: 0.85rem;
+  font-family: var(--mono); line-height: 1.7;
+  max-width: 300px; margin: 0 auto 2rem;
+}
 
-  .google-btn {
-    display: inline-flex; align-items: center; gap: 0.75rem;
-    background: var(--ink); color: white;
-    border: none; border-radius: 8px;
-    padding: 0.85rem 1.5rem;
-    font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-  .google-btn:hover { opacity: 0.85; }
+.google-btn {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  background: var(--ink); color: white;
+  border: none; border-radius: var(--r-sm);
+  padding: 0.85rem 1.5rem;
+  font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.google-btn:hover { opacity: 0.85; }
 
-  .google-icon { width: 20px; height: 20px; }
+.notice {
+  margin-top: 1.25rem;
+  font-size: 0.65rem; color: var(--muted);
+  font-family: var(--mono); line-height: 1.8;
+}
 
-  .notice {
-    margin-top: 1.5rem;
-    font-size: 0.7rem; color: var(--muted);
-    font-family: var(--mono); line-height: 1.6;
-  }
+/* ── APP SCREEN ─────────────────────────────────────────────────────────────── */
+#app-screen { display: none; }
 
-  /* ── App screen ── */
-  #app-screen { display: none; }
+/* ── FILTER BAR ─────────────────────────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
 
-  .section-title {
-    font-size: 0.65rem; font-weight: 600;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 1rem;
-    font-family: var(--mono);
-  }
+/* search */
+.search-row { position: relative; }
 
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.25rem;
-  }
+.search-icon {
+  position: absolute; left: 0.75rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
 
-  .card h3 {
-    font-size: 1rem; font-weight: 700;
-    margin-bottom: 0.25rem; letter-spacing: -0.02em;
-  }
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+  font-family: var(--mono); font-size: 0.8rem;
+  color: var(--ink); outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--ink); }
+.search-input::placeholder { color: var(--muted); }
 
-  .card .desc {
-    font-size: 0.75rem; color: var(--muted);
-    font-family: var(--mono); margin-bottom: 1.2rem;
-    line-height: 1.5;
-  }
+/* pill tabs */
+.tabs-row {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: 0.3rem;
+}
 
-  /* date picker */
-  .field-label {
-    font-size: 0.65rem; font-family: var(--mono);
-    color: var(--muted); letter-spacing: 0.1em;
-    text-transform: uppercase; display: block;
-    margin-bottom: 0.4rem;
-  }
+.tab-pill {
+  padding: 0.28rem 0.75rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 0.7rem; font-family: var(--mono);
+  color: var(--muted); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+  user-select: none;
+}
+.tab-pill:hover { border-color: var(--ink); color: var(--ink); }
+.tab-pill.active { background: var(--ink); color: white; border-color: var(--ink); }
 
-  input[type="date"] {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--ink);
-    font-family: var(--mono); font-size: 0.85rem;
-    padding: 0.6rem 0.8rem;
-    outline: none;
-    margin-bottom: 1rem;
-    transition: border-color 0.15s;
-  }
-  input[type="date"]:focus { border-color: var(--accent); }
+.tabs-sep {
+  width: 1px; height: 16px;
+  background: var(--border);
+  margin: 0 0.15rem;
+  flex-shrink: 0;
+}
 
-  /* pill options */
-  .pill-group {
-    display: flex; flex-wrap: wrap; gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
+/* ── ONE BOX ────────────────────────────────────────────────────────────────── */
+.one-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: clip; /* clip preserves border-radius without breaking sticky children */
+}
 
-  .pill {
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 0.75rem; font-family: var(--mono);
-    cursor: pointer; transition: all 0.15s;
-    color: var(--ink);
-  }
-  .pill:hover { border-color: var(--accent2); color: var(--accent2); }
-  .pill.active {
-    background: var(--accent2); color: white;
-    border-color: var(--accent2);
-  }
+/* list header */
+.list-header {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky; top: 60px; z-index: 10;
+}
 
-  /* buttons */
-  .btn {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    border: none; border-radius: 6px;
-    font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
-    padding: 0.6rem 1.1rem; cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    letter-spacing: 0.01em;
-  }
-  .btn:hover { opacity: 0.88; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.list-header-label {
+  flex: 1;
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); font-family: var(--mono);
+}
 
-  .btn-danger { background: var(--accent); color: white; }
-  .btn-primary { background: var(--accent2); color: white; }
-  .btn-ghost {
-    background: transparent; color: var(--muted);
-    border: 1px solid var(--border);
-  }
+.list-header-right {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); font-family: var(--mono);
+}
 
-  .btn-row {
-    display: flex; gap: 0.6rem; flex-wrap: wrap;
-    margin-top: 0.75rem;
-  }
+input[type="checkbox"] {
+  width: 14px; height: 14px;
+  accent-color: var(--ink);
+  cursor: pointer; flex-shrink: 0;
+}
 
-  /* status box */
-  .status-box {
-    border-radius: 8px;
-    padding: 0.85rem 1rem;
-    font-size: 0.78rem; font-family: var(--mono);
-    line-height: 1.6; margin-top: 0.75rem;
-    display: none;
-  }
-  .status-box.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #ffbb96; }
-  .status-box.success { background: var(--success-bg); color: var(--success); border: 1px solid #b7eb8f; }
-  .status-box.info { background: #e6f4ff; color: var(--accent2); border: 1px solid #91caff; }
-  .status-box.show { display: block; }
+/* ── LOADING STATE ──────────────────────────────────────────────────────────── */
+#loading-state {
+  display: none;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+#loading-state.show { display: block; }
 
-  /* log */
-  .log {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.75rem;
-    font-size: 0.68rem; font-family: var(--mono);
-    color: var(--muted); line-height: 1.8;
-    max-height: 140px; overflow-y: auto;
-    margin-top: 0.75rem; display: none;
-  }
-  .log.show { display: block; }
+.loader-wrap {
+  display: inline-flex; flex-direction: column;
+  align-items: center; gap: 0.55rem;
+}
 
-  /* confirm modal */
-  #modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(26,22,18,0.55);
-    z-index: 100;
-    align-items: center; justify-content: center;
-    padding: 1.5rem;
-  }
-  #modal-overlay.show { display: flex; }
+.loader-label {
+  font-size: 0.78rem; font-family: var(--mono);
+  color: var(--ink); font-weight: 500;
+  letter-spacing: 0.05em;
+}
 
-  #modal {
-    background: var(--card);
-    border-radius: 14px;
-    padding: 2rem;
-    max-width: 420px; width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  }
-  #modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
-  #modal p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
-  #modal .btn-row { margin-top: 0; }
+.loader-wrap { min-width: 240px; }
 
-  /* spinner */
-  .spin {
-    width: 12px; height: 12px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+.loader-bar-track {
+  width: 100%; height: 26px;
+  background: var(--ink);
+  border-radius: 13px; padding: 3px;
+  overflow: hidden;
+}
 
-  /* location checkboxes */
-  .check-group {
-    display: flex; flex-wrap: wrap; gap: 0.4rem;
-    margin-bottom: 1rem;
-  }
+.loader-bar-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, #d4380d 0%, #f5932e 50%, #d4380d 100%);
+  background-size: 200% 100%;
+  position: relative; overflow: hidden;
+}
 
-  .check-chip {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 0.73rem; font-family: var(--mono);
-    cursor: pointer; transition: all 0.15s;
-    color: var(--ink);
-    user-select: none;
-  }
-  .check-chip:hover { border-color: var(--accent2); color: var(--accent2); }
-  .check-chip input[type="checkbox"] { display: none; }
-  .check-chip.checked {
-    background: var(--accent2); color: white;
-    border-color: var(--accent2);
-  }
-  .check-chip.checked::before { content: '✓ '; font-size: 0.65rem; }
-  .check-chip.dimmed { opacity: 0.38; pointer-events: none; }
+.loader-bar-fill.indeterminate {
+  width: 45% !important;
+  animation: bar-slide 1.5s ease-in-out infinite;
+}
+@keyframes bar-slide {
+  0%   { transform: translateX(-140%); }
+  100% { transform: translateX(300%); }
+}
 
-  /* ── PROGRESS TRACKER ── */
-  .progress-tracker {
-    display: none;
-    margin-top: 1rem;
-    font-family: var(--mono);
-  }
-  .progress-tracker.show { display: block; }
+.loader-bar-stripes {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  gap: 12px; padding-left: 4px;
+  animation: stripes-march 0.7s linear infinite;
+}
+@keyframes stripes-march {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(16px); }
+}
 
-  .pt-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
+.loader-stripe {
+  width: 7px; height: 40px;
+  background: rgba(255,255,255,0.22);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
 
-  .pt-chevrons {
-    position: relative;
-    width: 24px;
-    height: 52px;
-    flex-shrink: 0;
-    margin-top: -10px;
-  }
-  .pt-chevron {
-    position: absolute;
-    left: 0;
-    stroke: var(--accent);
-    fill: none;
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .pt-chevron-1 { top: 0; opacity: 0.7; }
-  .pt-chevron-2 { top: 14px; opacity: 0.5; }
-  @keyframes pt-bounce-1 {
-    0%, 100% { transform: translateY(0); opacity: 0.7; }
-    50% { transform: translateY(8px); opacity: 0.9; }
-  }
-  @keyframes pt-bounce-2 {
-    0%, 100% { transform: translateY(0); opacity: 0.5; }
-    50% { transform: translateY(8px); opacity: 1; }
-  }
-  .progress-tracker.active .pt-chevron-1 {
-    animation: pt-bounce-1 1.5s ease-in-out infinite;
-  }
-  .progress-tracker.active .pt-chevron-2 {
-    animation: pt-bounce-2 1.5s ease-in-out infinite 0.3s;
-  }
+.loader-dots span {
+  animation: dot-fade 1.4s ease-in-out infinite;
+  opacity: 0;
+}
+.loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-fade { 0%,100%{opacity:0} 50%{opacity:1} }
 
-  .pt-banner-label {
-    background: var(--ink);
-    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-    padding: 0.3rem 1.3rem 0.3rem 0.8rem;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: white;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    min-width: 110px;
-  }
+/* ── SENDER LIST ────────────────────────────────────────────────────────────── */
+.sender-row {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
+}
+.sender-row:last-child { border-bottom: none; }
+.sender-row:hover  { background: var(--bg); }
+.sender-row.selected { background: #f2f4ff; }
 
-  .pt-dots { display: none; }
-  .progress-tracker.active .pt-dots { display: inline-flex; }
-  .pt-dot { opacity: 0; }
-  @keyframes pt-dot {
-    0%, 100% { opacity: 0; }
-    40%, 60% { opacity: 1; }
-  }
-  .progress-tracker.active .pt-dot:nth-child(1) { animation: pt-dot 1.5s ease-in-out infinite 0.1s; }
-  .progress-tracker.active .pt-dot:nth-child(2) { animation: pt-dot 1.5s ease-in-out infinite 0.3s; }
-  .progress-tracker.active .pt-dot:nth-child(3) { animation: pt-dot 1.5s ease-in-out infinite 0.5s; }
+.sender-info { flex: 1; min-width: 0; }
 
-  .pt-separator {
-    width: 100%;
-    height: 2px;
-    background: var(--ink);
-    border-radius: 2px;
-    margin-bottom: 0.55rem;
-  }
+.sender-name {
+  display: block; font-size: 0.83rem; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
 
-  .pt-labels, .pt-values {
-    display: flex;
-    align-items: center;
-  }
-  .pt-labels { margin-bottom: 0.25rem; }
-  .pt-col-bar { width: 110px; flex-shrink: 0; }
-  .pt-col-time { width: 118px; flex-shrink: 0; padding-left: 16px; }
-  .pt-col-count { padding-left: 16px; }
-  .pt-labels span {
-    font-size: 0.58rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+.sender-email {
+  display: block; font-size: 0.66rem; font-family: var(--mono);
+  color: var(--muted); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
-  .pt-bar-track {
-    width: 100%;
-    height: 10px;
-    border: 1px solid var(--ink);
-    border-radius: 999px;
-    padding: 1px;
-    background: transparent;
-    overflow: hidden;
-  }
-  .pt-bar-fill {
-    height: 100%;
-    background: var(--ink);
-    border-radius: 999px;
-    width: 0%;
-    transition: width 0.4s ease-out;
-  }
-  @keyframes pt-slide {
-    0% { transform: translateX(-200%); }
-    100% { transform: translateX(500%); }
-  }
-  .pt-bar-fill.collecting {
-    width: 20%;
-    transition: none;
-    animation: pt-slide 1.2s ease-in-out infinite;
-  }
+.unsub-tag {
+  font-size: 0.58rem; font-family: var(--mono);
+  background: #eff6ff; border: 1px solid #bfdbfe;
+  color: #2563eb; border-radius: 4px;
+  padding: 0.1rem 0.4rem; flex-shrink: 0;
+  letter-spacing: 0.04em; font-weight: 500;
+}
 
-  .pt-time-val, .pt-count-val { font-size: 0.8rem; }
+.count-col {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 2px;
+  flex-shrink: 0; min-width: 52px;
+}
 
-  .pt-footer-line {
-    width: 75%;
-    height: 2px;
-    background: var(--accent);
-    border-radius: 2px;
-    margin-top: 0.85rem;
-  }
+.count-badge {
+  font-size: 0.7rem; font-family: var(--mono); font-weight: 600;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 0.12rem 0.55rem;
+  color: var(--muted); width: 100%; text-align: center;
+  transition: all 0.15s;
+}
+.sender-row.selected .count-badge {
+  background: var(--ink); color: white; border-color: var(--ink);
+}
 
-  /* ── SENDER PANEL ── */
-  .sender-panel { display: none; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .sender-panel.show { display: block; }
+.unread-count {
+  font-size: 0.6rem; font-family: var(--mono);
+  color: #2563eb; font-weight: 500;
+  text-align: right; white-space: nowrap;
+  padding-right: 2px;
+}
 
-  .sender-panel-header {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-  }
-  .sender-panel-title {
-    display: block;
-    font-size: 0.75rem; font-weight: 700;
-    letter-spacing: -0.01em; margin-bottom: 0.5rem;
-  }
-  .sender-panel-controls { display: flex; gap: 0.5rem; align-items: center; }
+/* ── EMPTY / ERROR ──────────────────────────────────────────────────────────── */
+#empty-state {
+  display: none;
+  padding: 3rem 1rem; text-align: center;
+  font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+}
+#empty-state.show { display: block; }
 
-  .sender-search {
-    flex: 1; background: var(--card);
-    border: 1px solid var(--border); border-radius: 6px;
-    padding: 0.4rem 0.7rem;
-    font-family: var(--mono); font-size: 0.75rem; color: var(--ink);
-    outline: none; transition: border-color 0.15s;
-  }
-  .sender-search:focus { border-color: var(--accent2); }
-  .sender-search::placeholder { color: var(--muted); }
+/* box footer note */
+.box-footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.62rem; font-family: var(--mono);
+  color: var(--muted); font-style: italic;
+  background: var(--bg);
+  display: none;
+}
+.box-footer.show { display: block; }
 
-  .sender-sort-btn {
-    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-    padding: 0.4rem 0.7rem; font-family: var(--mono); font-size: 0.72rem;
-    color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s;
-  }
-  .sender-sort-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+/* ── DYNAMIC ACTION BAR ─────────────────────────────────────────────────────── */
+#action-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; justify-content: center;
+  padding: 0.85rem 1rem 1rem;
+  pointer-events: none;
+  transform: translateY(110%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#action-bar.visible {
+  transform: translateY(0);
+  pointer-events: all;
+}
 
-  .sender-select-all-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.55rem 1rem; border-bottom: 1px solid var(--border);
-    font-family: var(--mono); font-size: 0.72rem;
-  }
-  .sender-select-all-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-  .sender-selected-count { color: var(--muted); font-size: 0.68rem; }
+.action-bar-inner {
+  background: var(--ink);
+  border-radius: var(--r);
+  padding: 0.55rem 0.55rem 0.55rem 1rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  box-shadow: 0 8px 40px rgba(26,22,18,0.28);
+  max-width: 560px; width: 100%;
+}
 
-  .sender-disclaimer {
-    padding: 0.35rem 1rem;
-    font-family: var(--mono); font-size: 0.63rem;
-    color: var(--muted); font-style: italic;
-    border-bottom: 1px solid var(--border); background: var(--bg);
-  }
+.action-count {
+  font-size: 0.7rem; font-family: var(--mono);
+  color: rgba(255,255,255,0.55);
+  flex: 1; white-space: nowrap;
+}
 
-  .sender-list { max-height: 280px; overflow-y: auto; }
+.action-btns { display: flex; gap: 0.3rem; }
 
-  .sender-row {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.6rem 1rem; border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background 0.1s;
-  }
-  .sender-row:last-child { border-bottom: none; }
-  .sender-row:hover { background: var(--bg); }
-  .sender-row.selected { background: #eff6ff; }
-  .sender-row input[type="checkbox"] {
-    flex-shrink: 0; accent-color: var(--accent2);
-    width: 14px; height: 14px; cursor: pointer;
-  }
+/* wrapper for hover preview */
+.ab-wrap { position: relative; }
 
-  .sender-info { flex: 1; min-width: 0; }
-  .sender-name {
-    display: block; font-size: 0.78rem; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .sender-email {
-    display: block; font-size: 0.65rem; font-family: var(--mono);
-    color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+.ab-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  color: white;
+  font-family: var(--sans); font-size: 0.76rem; font-weight: 600;
+  padding: 0.48rem 0.9rem;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap; letter-spacing: 0.01em;
+}
+.ab-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.28);
+}
+.ab-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.ab-btn.ab-danger { background: var(--danger); border-color: var(--danger); }
+.ab-btn.ab-danger:hover { opacity: 0.88; }
 
-  .sender-count-badge {
-    flex-shrink: 0; font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 999px; padding: 0.15rem 0.5rem; color: var(--muted);
-  }
-  .sender-row.selected .sender-count-badge { background: var(--accent2); color: white; border-color: var(--accent2); }
+/* hover preview card */
+.ab-preview {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%; transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  width: 175px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.ab-wrap:hover .ab-preview { opacity: 1; }
 
-  .sender-empty {
-    padding: 1.5rem 1rem; text-align: center;
-    font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
-  }
+.ab-preview-title {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--ink); margin-bottom: 0.2rem;
+}
+.ab-preview-desc {
+  font-size: 0.63rem; font-family: var(--mono);
+  color: var(--muted); line-height: 1.5;
+}
 
-  .sender-panel-footer {
-    display: flex; gap: 0.6rem;
-    padding: 0.75rem 1rem; border-top: 1px solid var(--border); background: var(--bg);
-  }
+/* ── MODAL ──────────────────────────────────────────────────────────────────── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(26,22,18,0.48);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+#modal-overlay.show { display: flex; }
+
+#modal {
+  background: var(--surface);
+  border-radius: var(--r);
+  padding: 1.75rem;
+  max-width: 400px; width: 100%;
+  box-shadow: 0 28px 72px rgba(0,0,0,0.16);
+}
+
+#modal h3 {
+  font-size: 1rem; font-weight: 800;
+  letter-spacing: -0.02em; margin-bottom: 0.4rem;
+}
+
+#modal p {
+  font-size: 0.78rem; color: var(--muted);
+  font-family: var(--mono); line-height: 1.65;
+  margin-bottom: 1.25rem;
+}
+
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  border: none; border-radius: var(--r-sm);
+  font-family: var(--sans); font-size: 0.78rem; font-weight: 600;
+  padding: 0.52rem 1rem; cursor: pointer;
+  transition: opacity 0.15s; letter-spacing: 0.01em;
+}
+.btn:hover { opacity: 0.85; }
+.btn-ink    { background: var(--ink); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-ghost  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+/* ── PROGRESS OVERLAY ───────────────────────────────────────────────────────── */
+#progress-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(245,242,238,0.88);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 0.5rem;
+}
+#progress-overlay.show { display: flex; }
+
+.progress-label {
+  font-size: 0.8rem; font-family: var(--mono);
+  font-weight: 500; color: var(--ink);
+  letter-spacing: 0.05em;
+}
+
+.progress-status {
+  font-size: 0.7rem; font-family: var(--mono);
+  color: var(--muted); margin-top: 0.15rem;
+}
+
+/* ── TOAST ──────────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 5.5rem; left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink); color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--r-pill);
+  font-family: var(--mono); font-size: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  z-index: 300; pointer-events: none;
+  opacity: 0; transition: opacity 0.25s;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
 </style>
 </head>
 <body>
 
+<!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
 <header>
   <div class="logo">G</div>
-  <div class="header-text">
-    <h1>Gmail Manager</h1>
-    <p>bulk delete · mark as read · yours to share</p>
+  <div>
+    <div class="header-title">Gmail Terminator</div>
+    <div class="header-sub">bulk delete · mark as read · unsubscribe</div>
   </div>
   <div id="user-pill">
-    <div class="avatar" id="user-avatar"></div>
+    <div class="user-avatar" id="user-avatar"></div>
     <span id="user-email-display"></span>
     <button id="sign-out-btn" onclick="signOut()">sign out</button>
   </div>
 </header>
 
+<!-- ── MAIN ────────────────────────────────────────────────────────────────── -->
 <main>
 
   <!-- AUTH -->
   <div id="auth-screen">
     <h2>Clean up<br/>your inbox.</h2>
-    <p>Sign in with Google to bulk delete old emails or mark thousands as read — in seconds.</p>
+    <p class="sub">Sign in with Google to bulk delete, mark as read, or unsubscribe from emails — in seconds.</p>
     <button class="google-btn" onclick="signIn()">
-      <svg class="google-icon" viewBox="0 0 24 24" fill="none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
@@ -571,236 +575,218 @@
     <p class="notice">
       We request Gmail read/modify access.<br/>
       Your token stays in your browser only.<br/>
-      This app is open to anyone with the link.
+      Open to anyone with the link.
     </p>
   </div>
 
   <!-- APP -->
   <div id="app-screen">
 
-    <p class="section-title">Choose an action</p>
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
 
-    <!-- DELETE CARD -->
-    <div class="card">
-      <h3>🗑 Bulk Delete</h3>
-      <p class="desc">Move emails older than a chosen date to Trash. Gmail auto-purges Trash after 30 days.</p>
-
-      <label class="field-label">Delete emails older than</label>
-      <input type="date" id="delete-date" />
-
-      <label class="field-label">Search in</label>
-      <div class="check-group" id="delete-location-checks">
-        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(event,this,'delete')"><input type="checkbox" checked/> Inbox</label>
-        <label class="check-chip" data-val="sent" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Sent</label>
-        <label class="check-chip" data-val="spam" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Spam</label>
-        <label class="check-chip" data-val="trash" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Trash</label>
-        <label class="check-chip" data-val="anywhere" onclick="toggleChip(event,this,'delete')"><input type="checkbox"/> Everywhere</label>
+      <div class="search-row">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          id="sender-search"
+          class="search-input"
+          placeholder="Search senders…"
+          oninput="filterAndRender()"
+        />
       </div>
 
-      <div class="btn-row">
-        <button class="btn btn-danger" id="delete-count-btn" onclick="countForDelete()">Count emails</button>
+      <div class="tabs-row">
+        <div class="tab-pill active" data-cat="all"        onclick="selectCat(this)">All</div>
+        <div class="tab-pill"        data-cat="primary"    onclick="selectCat(this)">Primary</div>
+        <div class="tab-pill"        data-cat="promotions" onclick="selectCat(this)">Promotions</div>
+        <div class="tab-pill"        data-cat="social"     onclick="selectCat(this)">Social</div>
+        <div class="tab-pill"        data-cat="updates"    onclick="selectCat(this)">Updates</div>
+        <div class="tab-pill"        data-cat="sent"       onclick="selectCat(this)">Sent</div>
+        <div class="tab-pill"        data-cat="spam"       onclick="selectCat(this)">Spam</div>
+        <div class="tabs-sep"></div>
+        <div class="tab-pill" id="unread-pill" onclick="toggleUnread(this)">Unread</div>
+        <div class="tabs-sep"></div>
+        <div class="tab-pill"        data-range="3mo"  onclick="selectRange(this)">3 mo</div>
+        <div class="tab-pill active" data-range="6mo"  onclick="selectRange(this)">6 mo</div>
+        <div class="tab-pill"        data-range="1yr"  onclick="selectRange(this)">1 yr</div>
+        <div class="tab-pill"        data-range="all"  onclick="selectRange(this)">All time</div>
       </div>
 
-      <div class="status-box" id="delete-status"></div>
-      <div class="sender-panel" id="delete-sender-panel">
-        <div class="sender-panel-header">
-          <span class="sender-panel-title">Sender Breakdown</span>
-          <div class="sender-panel-controls">
-            <input type="text" class="sender-search" id="delete-sender-search" placeholder="Search by name or email…" oninput="filterSenders('delete')">
-            <button class="sender-sort-btn" id="delete-sort-btn" onclick="toggleSenderSort('delete')">Most first ↓</button>
-          </div>
-        </div>
-        <div class="sender-select-all-row">
-          <label class="sender-select-all-label">
-            <input type="checkbox" id="delete-select-all" onchange="toggleSelectAll('delete', this.checked)"> Select all
-          </label>
-          <span class="sender-selected-count" id="delete-selected-count">0 selected</span>
-        </div>
-        <div class="sender-disclaimer">Showing senders from the top 500 emails analyzed. Use filters to refine your scope.</div>
-        <div class="sender-list" id="delete-sender-list"></div>
-        <div class="sender-panel-footer">
-          <button class="btn btn-danger" id="delete-proceed-btn" onclick="proceedWithSelected('delete')" disabled>Proceed with selected</button>
-          <button class="btn btn-ghost" onclick="cancelSenderPanel('delete')">Cancel</button>
-        </div>
-      </div>
-      <div class="progress-tracker" id="delete-progress">
-        <div class="pt-header">
-          <div class="pt-chevrons">
-            <svg class="pt-chevron pt-chevron-1" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            <svg class="pt-chevron pt-chevron-2" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="pt-banner-label">
-            <span class="pt-banner-text">READY</span>
-            <span class="pt-dots"><span class="pt-dot">.</span><span class="pt-dot">.</span><span class="pt-dot">.</span></span>
-          </div>
-        </div>
-        <div class="pt-separator"></div>
-        <div class="pt-labels">
-          <div class="pt-col-bar"><span>Progress</span></div>
-          <div class="pt-col-time"><span>Est. Time</span></div>
-          <div class="pt-col-count"><span>Emails:</span></div>
-        </div>
-        <div class="pt-values">
-          <div class="pt-col-bar"><div class="pt-bar-track"><div class="pt-bar-fill"></div></div></div>
-          <div class="pt-col-time"><span class="pt-time-val">—</span></div>
-          <div class="pt-col-count"><span class="pt-count-val">0</span></div>
-        </div>
-        <div class="pt-footer-line"></div>
-      </div>
-      <div class="log" id="delete-log"></div>
     </div>
 
-    <!-- MARK AS READ CARD -->
-    <div class="card">
-      <h3>✉️ Mark as Read</h3>
-      <p class="desc">Mark unread emails as read — all at once or filtered by time window.</p>
+    <!-- ONE BOX -->
+    <div class="one-box">
 
-      <div class="pill-group" id="read-range-pills">
-        <div class="pill active" data-val="all" onclick="selectPill(this, 'read')">All unread</div>
-        <div class="pill" data-val="30d" onclick="selectPill(this, 'read')">Past 30 days</div>
-        <div class="pill" data-val="7d" onclick="selectPill(this, 'read')">Past 7 days</div>
-        <div class="pill" data-val="today" onclick="selectPill(this, 'read')">Today</div>
+      <!-- sticky list header -->
+      <div class="list-header">
+        <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)" title="Select all visible">
+        <span class="list-header-label">Sender</span>
+        <span class="list-header-right">Emails</span>
       </div>
 
-      <label class="field-label">Search in</label>
-      <div class="check-group" id="read-location-checks">
-        <label class="check-chip checked" data-val="inbox" onclick="toggleChip(event,this,'read')"><input type="checkbox" checked/> Inbox</label>
-        <label class="check-chip" data-val="sent" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Sent</label>
-        <label class="check-chip" data-val="spam" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Spam</label>
-        <label class="check-chip" data-val="trash" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Trash</label>
-        <label class="check-chip" data-val="anywhere" onclick="toggleChip(event,this,'read')"><input type="checkbox"/> Everywhere</label>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" id="read-count-btn" onclick="countForRead()">Count unread</button>
-      </div>
-
-      <div class="status-box" id="read-status"></div>
-      <div class="sender-panel" id="read-sender-panel">
-        <div class="sender-panel-header">
-          <span class="sender-panel-title">Sender Breakdown</span>
-          <div class="sender-panel-controls">
-            <input type="text" class="sender-search" id="read-sender-search" placeholder="Search by name or email…" oninput="filterSenders('read')">
-            <button class="sender-sort-btn" id="read-sort-btn" onclick="toggleSenderSort('read')">Most first ↓</button>
+      <!-- loading -->
+      <div id="loading-state">
+        <div class="loader-wrap">
+          <div class="loader-label">
+            Loading<span class="loader-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
+          <div class="loader-bar-track">
+            <div class="loader-bar-fill indeterminate">
+              <div class="loader-bar-stripes">
+                <div class="loader-stripe"></div><div class="loader-stripe"></div>
+                <div class="loader-stripe"></div><div class="loader-stripe"></div>
+                <div class="loader-stripe"></div><div class="loader-stripe"></div>
+                <div class="loader-stripe"></div><div class="loader-stripe"></div>
+                <div class="loader-stripe"></div><div class="loader-stripe"></div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="sender-select-all-row">
-          <label class="sender-select-all-label">
-            <input type="checkbox" id="read-select-all" onchange="toggleSelectAll('read', this.checked)"> Select all
-          </label>
-          <span class="sender-selected-count" id="read-selected-count">0 selected</span>
-        </div>
-        <div class="sender-disclaimer">Showing senders from the top 500 emails analyzed. Use filters to refine your scope.</div>
-        <div class="sender-list" id="read-sender-list"></div>
-        <div class="sender-panel-footer">
-          <button class="btn btn-primary" id="read-proceed-btn" onclick="proceedWithSelected('read')" disabled>Proceed with selected</button>
-          <button class="btn btn-ghost" onclick="cancelSenderPanel('read')">Cancel</button>
-        </div>
       </div>
-      <div class="progress-tracker" id="read-progress">
-        <div class="pt-header">
-          <div class="pt-chevrons">
-            <svg class="pt-chevron pt-chevron-1" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            <svg class="pt-chevron pt-chevron-2" width="24" height="24" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="pt-banner-label">
-            <span class="pt-banner-text">READY</span>
-            <span class="pt-dots"><span class="pt-dot">.</span><span class="pt-dot">.</span><span class="pt-dot">.</span></span>
-          </div>
-        </div>
-        <div class="pt-separator"></div>
-        <div class="pt-labels">
-          <div class="pt-col-bar"><span>Progress</span></div>
-          <div class="pt-col-time"><span>Est. Time</span></div>
-          <div class="pt-col-count"><span>Emails:</span></div>
-        </div>
-        <div class="pt-values">
-          <div class="pt-col-bar"><div class="pt-bar-track"><div class="pt-bar-fill"></div></div></div>
-          <div class="pt-col-time"><span class="pt-time-val">—</span></div>
-          <div class="pt-col-count"><span class="pt-count-val">0</span></div>
-        </div>
-        <div class="pt-footer-line"></div>
-      </div>
-      <div class="log" id="read-log"></div>
+
+      <!-- sender rows rendered here -->
+      <div id="sender-list"></div>
+
+      <!-- empty / error -->
+      <div id="empty-state">No senders found for this filter.</div>
+
+      <!-- footer note -->
+      <div class="box-footer" id="box-footer">Showing top senders from the most recent 500 emails analyzed.</div>
+
     </div>
 
   </div>
 </main>
 
-<!-- CONFIRM MODAL -->
-<div id="modal-overlay">
-  <div id="modal">
-    <h3 id="modal-title">Are you sure?</h3>
-    <p id="modal-body"></p>
-    <div class="btn-row">
-      <button class="btn btn-danger" id="modal-confirm-btn" onclick="modalConfirm()">Yes, proceed</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+<!-- ── DYNAMIC ACTION BAR ──────────────────────────────────────────────────── -->
+<div id="action-bar">
+  <div class="action-bar-inner">
+    <span class="action-count" id="action-count">0 selected</span>
+    <div class="action-btns">
+
+      <div class="ab-wrap">
+        <button class="ab-btn" id="read-btn" onclick="confirmAction('read')">Mark as Read</button>
+        <div class="ab-preview">
+          <div class="ab-preview-title">Mark as Read</div>
+          <div class="ab-preview-desc">Mark all unread emails from selected senders as read.</div>
+        </div>
+      </div>
+
+      <div class="ab-wrap">
+        <button class="ab-btn ab-danger" id="delete-btn" onclick="confirmAction('delete')">Delete</button>
+        <div class="ab-preview">
+          <div class="ab-preview-title">Bulk Delete</div>
+          <div class="ab-preview-desc">Move emails from selected senders to Trash within the current filter.</div>
+        </div>
+      </div>
+
+      <div class="ab-wrap">
+        <button class="ab-btn" id="unsub-btn" onclick="confirmAction('unsubscribe')" disabled>Unsubscribe</button>
+        <div class="ab-preview">
+          <div class="ab-preview-title">Unsubscribe</div>
+          <div class="ab-preview-desc">Auto-unsubscribe from senders that include a detectable unsubscribe link. Shown in blue on rows.</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
+<!-- ── CONFIRM MODAL ───────────────────────────────────────────────────────── -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h3 id="modal-title">Are you sure?</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ink" id="modal-confirm-btn" onclick="modalConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROGRESS OVERLAY ────────────────────────────────────────────────────── -->
+<div id="progress-overlay">
+  <div class="loader-wrap">
+    <div class="progress-label" id="progress-label">Processing<span class="loader-dots"><span>.</span><span>.</span><span>.</span></span></div>
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill" id="progress-bar" style="width:0%">
+        <div class="loader-bar-stripes">
+          <div class="loader-stripe"></div><div class="loader-stripe"></div>
+          <div class="loader-stripe"></div><div class="loader-stripe"></div>
+          <div class="loader-stripe"></div><div class="loader-stripe"></div>
+          <div class="loader-stripe"></div><div class="loader-stripe"></div>
+          <div class="loader-stripe"></div><div class="loader-stripe"></div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-status" id="progress-status">Collecting messages…</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
 <script src="config.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-// Users need to create their own Google OAuth Client ID at
-// console.cloud.google.com → APIs & Services → Credentials
-// Set Authorized JS origins to the domain this page is hosted on.
-// For testing locally, use http://localhost as origin.
-// CLIENT_ID and CLIENT_SECRET are loaded from config.js (gitignored)
-// Copy config.example.js → config.js and fill in your credentials
-const SCOPES = 'https://www.googleapis.com/auth/gmail.modify';
+const SCOPES = 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send';
 
 // ── STATE ───────────────────────────────────────────────────────────────────
-let accessToken = null;
-let pendingAction = null; // { type: 'delete'|'read', query, count }
-let selectedReadRange = 'all';
+let accessToken    = null;
+let pendingAction  = null;
+let senders        = []; // [{name, email, count, selected, unsubscribe}]
+let selectedCat    = 'all';
+let selectedRange  = '6mo';
+let unreadOnly     = false;
 
-// ── LOCATION CHIPS ───────────────────────────────────────────────────────────
-function toggleChip(event, chip, prefix) {
-  event.preventDefault();
-  const isAnywhere = chip.dataset.val === 'anywhere';
-  const group = document.getElementById(`${prefix}-location-checks`);
-  const allChips = [...group.querySelectorAll('.check-chip')];
-  const anywhereChip = allChips.find(c => c.dataset.val === 'anywhere');
+// ── QUERY BUILDER ───────────────────────────────────────────────────────────
+function buildQuery() {
+  const parts = [];
+  if      (selectedCat === 'primary')    parts.push('category:primary');
+  else if (selectedCat === 'promotions') parts.push('category:promotions');
+  else if (selectedCat === 'social')     parts.push('category:social');
+  else if (selectedCat === 'updates')    parts.push('category:updates');
+  else if (selectedCat === 'sent')       parts.push('in:sent');
+  else if (selectedCat === 'spam')       parts.push('in:spam');
+  else                                   parts.push('in:inbox');
 
-  if (isAnywhere) {
-    // Toggle Everywhere: when on, dim all others; when off, re-enable
-    const turningOn = !chip.classList.contains('checked');
-    chip.classList.toggle('checked', turningOn);
-    allChips.filter(c => c !== chip).forEach(c => {
-      c.classList.toggle('dimmed', turningOn);
-      c.classList.remove('checked');
-    });
-  } else {
-    // If Everywhere is active, clicking another chip should first deactivate it
-    if (anywhereChip.classList.contains('checked')) {
-      anywhereChip.classList.remove('checked');
-      allChips.forEach(c => c.classList.remove('dimmed'));
-    }
-    chip.classList.toggle('checked');
-    // If nothing is checked, re-check this chip (need at least one)
-    const anyChecked = allChips.some(c => c.classList.contains('checked'));
-    if (!anyChecked) chip.classList.add('checked');
+  if (selectedRange !== 'all') {
+    const days = selectedRange === '3mo' ? 90 : selectedRange === '6mo' ? 180 : 365;
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    const fmt = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    parts.push(`after:${fmt}`);
   }
+  return parts.join(' ');
 }
 
-function getLocationQuery(prefix) {
-  const group = document.getElementById(`${prefix}-location-checks`);
-  const checked = [...group.querySelectorAll('.check-chip.checked')];
-  if (checked.some(c => c.dataset.val === 'anywhere')) return 'in:anywhere';
-  if (checked.length === 0) return 'in:inbox';
-  if (checked.length === 1) return `in:${checked[0].dataset.val}`;
-  return `{${checked.map(c => `in:${c.dataset.val}`).join(' ')}}`;
+// ── TAB SELECTION ────────────────────────────────────────────────────────────
+function selectCat(el) {
+  document.querySelectorAll('[data-cat]').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedCat = el.dataset.cat;
+  loadSenders();
 }
 
-function getLocationLabel(prefix) {
-  const group = document.getElementById(`${prefix}-location-checks`);
-  const checked = [...group.querySelectorAll('.check-chip.checked')];
-  if (checked.some(c => c.dataset.val === 'anywhere')) return 'everywhere';
-  return checked.map(c => c.dataset.val).join(', ');
+function selectRange(el) {
+  document.querySelectorAll('[data-range]').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedRange = el.dataset.range;
+  loadSenders();
 }
 
-// ── AUTH ────────────────────────────────────────────────────────────────────
+function toggleUnread(el) {
+  unreadOnly = !unreadOnly;
+  el.classList.toggle('active', unreadOnly);
+  renderSenderList();
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
 function pkceVerifier() {
   const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
@@ -808,56 +794,51 @@ function pkceVerifier() {
 }
 
 async function pkceChallenge(verifier) {
-  const data = new TextEncoder().encode(verifier);
+  const data   = new TextEncoder().encode(verifier);
   const digest = await crypto.subtle.digest('SHA-256', data);
   return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 
 async function signIn() {
   const redirectUri = location.origin + location.pathname;
-  const verifier = pkceVerifier();
-  const challenge = await pkceChallenge(verifier);
+  const verifier    = pkceVerifier();
+  const challenge   = await pkceChallenge(verifier);
   sessionStorage.setItem('pkce_verifier', verifier);
-
   const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: SCOPES,
-    code_challenge: challenge,
+    client_id:             CLIENT_ID,
+    redirect_uri:          redirectUri,
+    response_type:         'code',
+    scope:                 SCOPES,
+    code_challenge:        challenge,
     code_challenge_method: 'S256',
-    prompt: 'select_account',
-    access_type: 'online',
+    prompt:                'select_account',
+    access_type:           'online',
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
 function signOut() {
-  accessToken = null;
+  accessToken = null; senders = [];
   sessionStorage.removeItem('gmail_token');
   sessionStorage.removeItem('gmail_email');
   showAuth();
 }
 
 async function handleOAuthCallback() {
-  // PKCE auth code flow: code arrives as a query param
   const params = new URLSearchParams(location.search);
-  const code = params.get('code');
+  const code   = params.get('code');
   if (code) {
     const verifier = sessionStorage.getItem('pkce_verifier');
     sessionStorage.removeItem('pkce_verifier');
     history.replaceState(null, '', location.pathname);
     try {
-      const res = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
+      const res  = await fetch('https://oauth2.googleapis.com/token', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          redirect_uri: location.origin + location.pathname,
-          code_verifier: verifier,
-          grant_type: 'authorization_code',
+        body:    new URLSearchParams({
+          code, client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+          redirect_uri:   location.origin + location.pathname,
+          code_verifier:  verifier, grant_type: 'authorization_code',
         }),
       });
       const data = await res.json();
@@ -866,22 +847,14 @@ async function handleOAuthCallback() {
         sessionStorage.setItem('gmail_token', accessToken);
         const email = await fetchUserEmail();
         showApp(email);
-      } else {
-        console.error('Token exchange failed:', data);
-        showAuth();
-      }
-    } catch (e) {
-      console.error('Token exchange error:', e);
-      showAuth();
-    }
+      } else { showAuth(); }
+    } catch { showAuth(); }
     return;
   }
-  // Check session
   const saved = sessionStorage.getItem('gmail_token');
   if (saved) {
     accessToken = saved;
-    const email = sessionStorage.getItem('gmail_email') || '';
-    showApp(email);
+    showApp(sessionStorage.getItem('gmail_email') || '');
   } else {
     showAuth();
   }
@@ -892,7 +865,7 @@ async function fetchUserEmail() {
     const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    const d = await r.json();
+    const d     = await r.json();
     const email = d.email || '';
     sessionStorage.setItem('gmail_email', email);
     return email;
@@ -901,19 +874,18 @@ async function fetchUserEmail() {
 
 function showAuth() {
   document.getElementById('auth-screen').style.display = 'block';
-  document.getElementById('app-screen').style.display = 'none';
-  document.getElementById('user-pill').style.display = 'none';
+  document.getElementById('app-screen').style.display  = 'none';
+  document.getElementById('user-pill').style.display   = 'none';
 }
 
 function showApp(email) {
   document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('app-screen').style.display  = 'block';
   const pill = document.getElementById('user-pill');
   pill.style.display = 'flex';
   document.getElementById('user-email-display').textContent = email;
   document.getElementById('user-avatar').textContent = (email[0] || 'U').toUpperCase();
-  // Set default date to today
-  document.getElementById('delete-date').value = new Date().toISOString().split('T')[0];
+  loadSenders();
 }
 
 // ── GMAIL API HELPERS ────────────────────────────────────────────────────────
@@ -927,209 +899,256 @@ async function gmailGet(path) {
 
 async function gmailPost(path, body) {
   const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/${path}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
+    method:  'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`Gmail API ${r.status}: ${await r.text()}`);
   if (r.status === 204) return null;
   return r.json();
 }
 
-// Count messages matching query
-async function countMessages(query) {
-  let total = 0, pageToken = null;
-  do {
-    const url = `messages?q=${encodeURIComponent(query)}&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
-    const data = await gmailGet(url);
-    total += (data.messages || []).length;
-    pageToken = data.nextPageToken || null;
-    // For counting, stop after 3 pages (1500) to be fast; real count shown as "1500+"
-    if (total >= 1500 && pageToken) { return `${total}+`; }
-  } while (pageToken);
-  return total;
-}
-
-// Get all message IDs matching query
 async function* listMessages(query) {
   let pageToken = null;
   do {
-    const url = `messages?q=${encodeURIComponent(query)}&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
+    const url  = `messages?q=${encodeURIComponent(query)}&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
     const data = await gmailGet(url);
     for (const m of (data.messages || [])) yield m.id;
     pageToken = data.nextPageToken || null;
   } while (pageToken);
 }
 
-// Batch modify (trash or mark read) up to 1000 at a time
+async function countMessages(query) {
+  let total = 0, pageToken = null;
+  do {
+    const url  = `messages?q=${encodeURIComponent(query)}&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
+    const data = await gmailGet(url);
+    total += (data.messages || []).length;
+    pageToken = data.nextPageToken || null;
+    if (total >= 1500 && pageToken) return `${total}+`;
+  } while (pageToken);
+  return total;
+}
+
 async function batchModify(ids, addLabels = [], removeLabels = [], onProgress = null) {
   for (let i = 0; i < ids.length; i += 100) {
     const chunk = ids.slice(i, i + 100);
     await gmailPost('messages/batchModify', {
-      ids: chunk,
-      addLabelIds: addLabels,
-      removeLabelIds: removeLabels,
+      ids: chunk, addLabelIds: addLabels, removeLabelIds: removeLabels,
     });
     if (onProgress) onProgress(Math.min(i + 100, ids.length), ids.length);
   }
 }
 
-// ── DELETE FLOW ─────────────────────────────────────────────────────────────
-function dateToGmailFormat(dateStr) {
-  // yyyy-mm-dd → yyyy/mm/dd
-  return dateStr.replace(/-/g, '/');
+// ── SENDER PARSING ───────────────────────────────────────────────────────────
+function parseSender(from) {
+  const m = from.match(/^"?([^"<]*?)"?\s*<([^>]+)>$/);
+  if (m) return { name: m[1].trim() || m[2].trim(), email: m[2].trim().toLowerCase() };
+  return { name: from.trim(), email: from.trim().toLowerCase() };
 }
 
-async function countForDelete() {
-  const dateVal = document.getElementById('delete-date').value;
-  if (!dateVal) return;
-  const btn = document.getElementById('delete-count-btn');
-  const status = document.getElementById('delete-status');
-  const log = document.getElementById('delete-log');
-  ptHide('delete');
+function parseUnsubscribe(header) {
+  if (!header) return null;
+  const mailto = header.match(/<mailto:([^>]+)>/i);
+  if (mailto) return { type: 'mailto', url: mailto[1] };
+  const https  = header.match(/<(https?:\/\/[^>]+)>/i);
+  if (https)  return { type: 'https',  url: https[1] };
+  return null;
+}
 
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spin"></span> Counting…`;
-  setStatus(status, 'info', '⏳ Searching Gmail…');
-  log.className = 'log show';
-  log.textContent = '';
+// ── LOAD SENDERS (auto-runs on sign-in and filter change) ────────────────────
+async function loadSenders() {
+  // reset UI
+  document.getElementById('loading-state').className  = 'show';
+  document.getElementById('sender-list').innerHTML    = '';
+  document.getElementById('empty-state').className    = '';
+  document.getElementById('box-footer').className     = 'box-footer';
+  hideActionBar();
+  senders = [];
+  updateSelectAll();
 
   try {
-    const locationQ = getLocationQuery('delete');
-    const locationLabel = getLocationLabel('delete');
-    const query = `${locationQ} before:${dateToGmailFormat(dateVal)}`;
-    appendLog(log, `Query: ${query}`);
-    const count = await countMessages(query);
-    appendLog(log, `Found: ${count} emails`);
-    setStatus(status, 'warn', `Found <strong>${count}</strong> emails in <em>${locationLabel}</em> before ${dateVal}. Analyzing senders…`);
-    await showSenderPanel('delete', query, 'delete', 'Move to Trash');
+    const query = buildQuery();
+    const ids   = [];
+    for await (const id of listMessages(query)) {
+      ids.push(id);
+      if (ids.length >= 500) break;
+    }
+
+    const map   = {};
+    const BATCH = 10;
+    for (let i = 0; i < ids.length; i += BATCH) {
+      const chunk   = ids.slice(i, i + BATCH);
+      const results = await Promise.all(
+        chunk.map(id =>
+          gmailGet(`messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=List-Unsubscribe`)
+        )
+      );
+      if (i + BATCH < ids.length) await new Promise(r => setTimeout(r, 80));
+      for (const msg of results) {
+        const headers  = msg.payload?.headers || [];
+        const fromVal  = headers.find(h => h.name === 'From')?.value || '';
+        const unsubVal = headers.find(h => h.name === 'List-Unsubscribe')?.value || '';
+        const isUnread = (msg.labelIds || []).includes('UNREAD');
+        const { name, email } = parseSender(fromVal);
+        if (!map[email]) map[email] = { name, email, count: 0, unreadCount: 0, selected: false, unsubscribe: null };
+        map[email].count++;
+        if (isUnread) map[email].unreadCount++;
+        if (!map[email].unsubscribe && unsubVal) {
+          map[email].unsubscribe = parseUnsubscribe(unsubVal);
+        }
+      }
+    }
+
+    senders = Object.values(map).sort((a, b) => b.count - a.count);
+    document.getElementById('loading-state').className = '';
+
+    if (senders.length === 0) {
+      document.getElementById('empty-state').className = 'show';
+    } else {
+      renderSenderList();
+      document.getElementById('box-footer').className = 'box-footer show';
+    }
   } catch (e) {
-    setStatus(status, 'warn', `Error: ${e.message}`);
-    appendLog(log, `ERROR: ${e.message}`);
+    document.getElementById('loading-state').className = '';
+    document.getElementById('empty-state').className   = 'show';
+    document.getElementById('empty-state').textContent = `Error loading senders: ${e.message}`;
   }
-  btn.disabled = false;
-  btn.innerHTML = 'Count emails';
 }
 
-async function executeDelete(query) {
-  const status = document.getElementById('delete-status');
-  const log = document.getElementById('delete-log');
-  const btn = document.getElementById('delete-count-btn');
+// ── RENDERING ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  btn.disabled = true;
-  setStatus(status, 'info', '⏳ Deleting…');
-  log.className = 'log show';
-  appendLog(log, 'Collecting message IDs…');
-  ptShow('delete');
+function getFiltered() {
+  const q = document.getElementById('sender-search').value.toLowerCase();
+  return senders.filter(s => {
+    if (unreadOnly && s.unreadCount === 0) return false;
+    if (q && !s.name.toLowerCase().includes(q) && !s.email.includes(q)) return false;
+    return true;
+  });
+}
 
-  try {
-    const ids = [];
-    for await (const id of listMessages(query)) ids.push(id);
-    appendLog(log, `Collected ${ids.length} IDs. Moving to trash…`);
-    ptStartProcessing('delete');
-    const t0 = Date.now();
-    await batchModify(ids, ['TRASH'], [], (done, total) => ptUpdate('delete', done, total, t0));
-    ptComplete('delete', ids.length);
-    setStatus(status, 'success', `✓ Done! ${ids.length} emails moved to Trash.`);
-    appendLog(log, `✓ Complete. ${ids.length} emails trashed.`);
-  } catch (e) {
-    ptHide('delete');
-    setStatus(status, 'warn', `Error: ${e.message}`);
-    appendLog(log, `ERROR: ${e.message}`);
+function renderSenderList() {
+  const list     = document.getElementById('sender-list');
+  const filtered = getFiltered();
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    document.getElementById('empty-state').className   = 'show';
+    document.getElementById('empty-state').textContent = 'No senders match your search.';
+    updateSelectAll(); updateActionBar(); return;
   }
-  btn.disabled = false;
-  btn.innerHTML = 'Count emails';
+  document.getElementById('empty-state').className = '';
+
+  list.innerHTML = filtered.map(s => `
+    <div class="sender-row${s.selected ? ' selected' : ''}" data-email="${escHtml(s.email)}" onclick="toggleRow(this)">
+      <input type="checkbox"${s.selected ? ' checked' : ''}
+        onclick="event.stopPropagation(); toggleRow(this.closest('.sender-row'))">
+      <div class="sender-info">
+        <span class="sender-name">${escHtml(s.name)}</span>
+        <span class="sender-email">${escHtml(s.email)}</span>
+      </div>
+      ${s.unsubscribe ? `<span class="unsub-tag">unsub</span>` : ''}
+      <div class="count-col">
+        <span class="count-badge">${s.count}</span>
+        ${s.unreadCount > 0 ? `<span class="unread-count">${s.unreadCount} unread</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  updateSelectAll();
+  updateActionBar();
 }
 
-// ── MARK AS READ FLOW ────────────────────────────────────────────────────────
-function selectPill(el, group) {
-  document.querySelectorAll(`#${group}-range-pills .pill`).forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  selectedReadRange = el.dataset.val;
+function filterAndRender() { renderSenderList(); }
+
+function toggleRow(row) {
+  const email  = row.dataset.email;
+  const sender = senders.find(s => s.email === email);
+  if (!sender) return;
+  sender.selected = !sender.selected;
+  row.classList.toggle('selected', sender.selected);
+  row.querySelector('input[type="checkbox"]').checked = sender.selected;
+  updateSelectAll();
+  updateActionBar();
 }
 
-function readRangeToQuery(range) {
-  const now = new Date();
-  const fmt = d => `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-  if (range === 'all') return 'is:unread';
-  if (range === 'today') {
-    const today = fmt(now);
-    return `is:unread after:${today}`;
+function toggleSelectAll(checked) {
+  getFiltered().forEach(s => s.selected = checked);
+  renderSenderList();
+}
+
+function updateSelectAll() {
+  const cb       = document.getElementById('select-all');
+  if (!cb) return;
+  const filtered = getFiltered();
+  const all      = filtered.length > 0 && filtered.every(s => s.selected);
+  const some     = filtered.some(s => s.selected);
+  cb.checked       = all;
+  cb.indeterminate = !all && some;
+}
+
+// ── ACTION BAR ───────────────────────────────────────────────────────────────
+function updateActionBar() {
+  const selected = senders.filter(s => s.selected);
+  const n        = selected.length;
+  const bar      = document.getElementById('action-bar');
+
+  if (n === 0) { bar.classList.remove('visible'); return; }
+
+  bar.classList.add('visible');
+  document.getElementById('action-count').textContent =
+    `${n} sender${n !== 1 ? 's' : ''} selected`;
+
+  // unsubscribe only enabled if at least one selected sender has unsub header
+  document.getElementById('unsub-btn').disabled = !selected.some(s => s.unsubscribe);
+}
+
+function hideActionBar() {
+  document.getElementById('action-bar').classList.remove('visible');
+}
+
+// ── CONFIRM ACTION ───────────────────────────────────────────────────────────
+async function confirmAction(type) {
+  const selected = senders.filter(s => s.selected);
+  if (!selected.length) return;
+
+  const query    = buildQuery();
+  const senderQ  = selected.length === 1
+    ? `from:${selected[0].email}`
+    : `{${selected.map(s => `from:${s.email}`).join(' ')}}`;
+  const label    = selected.length <= 3
+    ? selected.map(s => s.name || s.email).join(', ')
+    : `${selected.length} senders`;
+
+  if (type === 'unsubscribe') {
+    const targets = selected.filter(s => s.unsubscribe);
+    pendingAction = { type: 'unsubscribe', senders: targets };
+    document.getElementById('modal-title').textContent = 'Unsubscribe';
+    document.getElementById('modal-body').textContent  =
+      `Send unsubscribe requests for ${targets.length} sender${targets.length !== 1 ? 's' : ''}: ${targets.map(s => s.name || s.email).join(', ')}.`;
+    document.getElementById('modal-confirm-btn').textContent  = 'Unsubscribe';
+    document.getElementById('modal-confirm-btn').className    = 'btn btn-ink';
+    document.getElementById('modal-overlay').classList.add('show');
+    return;
   }
-  const days = range === '30d' ? 30 : 7;
-  const past = new Date(now); past.setDate(now.getDate() - days);
-  return `is:unread after:${fmt(past)}`;
-}
 
-async function countForRead() {
-  const btn = document.getElementById('read-count-btn');
-  const status = document.getElementById('read-status');
-  const log = document.getElementById('read-log');
-  ptHide('read');
+  const combinedQ = type === 'read'
+    ? `${query} is:unread ${senderQ}`
+    : `${query} ${senderQ}`;
 
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spin"></span> Counting…`;
-  setStatus(status, 'info', '⏳ Searching Gmail…');
-  log.className = 'log show';
-  log.textContent = '';
+  let count = '…';
+  try { count = await countMessages(combinedQ); } catch { count = 'unknown number of'; }
 
-  try {
-    const locationQ = getLocationQuery('read');
-    const locationLabel = getLocationLabel('read');
-    const baseQuery = readRangeToQuery(selectedReadRange);
-    const query = `${locationQ} ${baseQuery}`;
-    appendLog(log, `Query: ${query}`);
-    const count = await countMessages(query);
-    appendLog(log, `Found: ${count} unread`);
-    const rangeLabel = { all: 'all unread', '30d': 'past 30 days', '7d': 'past 7 days', today: 'today' }[selectedReadRange];
-    setStatus(status, 'info', `Found <strong>${count}</strong> unread emails in <em>${locationLabel}</em> (${rangeLabel}). Analyzing senders…`);
-    await showSenderPanel('read', query, 'read', 'Mark as Read');
-  } catch (e) {
-    setStatus(status, 'warn', `Error: ${e.message}`);
-    appendLog(log, `ERROR: ${e.message}`);
-  }
-  btn.disabled = false;
-  btn.innerHTML = 'Count unread';
-}
+  pendingAction = { type, query: combinedQ };
 
-async function executeMarkRead(query) {
-  const status = document.getElementById('read-status');
-  const log = document.getElementById('read-log');
-  const btn = document.getElementById('read-count-btn');
-
-  btn.disabled = true;
-  setStatus(status, 'info', '⏳ Marking as read…');
-  log.className = 'log show';
-  appendLog(log, 'Collecting unread message IDs…');
-  ptShow('read');
-
-  try {
-    const ids = [];
-    for await (const id of listMessages(query)) ids.push(id);
-    appendLog(log, `Collected ${ids.length} IDs. Marking read…`);
-    ptStartProcessing('read');
-    const t0 = Date.now();
-    await batchModify(ids, [], ['UNREAD'], (done, total) => ptUpdate('read', done, total, t0));
-    ptComplete('read', ids.length);
-    setStatus(status, 'success', `✓ Done! ${ids.length} emails marked as read.`);
-    appendLog(log, `✓ Complete. ${ids.length} emails marked read.`);
-  } catch (e) {
-    ptHide('read');
-    setStatus(status, 'warn', `Error: ${e.message}`);
-    appendLog(log, `ERROR: ${e.message}`);
-  }
-  btn.disabled = false;
-  btn.innerHTML = 'Count unread';
-}
-
-// ── MODAL ────────────────────────────────────────────────────────────────────
-function showModal(title, body, confirmLabel) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').textContent = body;
-  document.getElementById('modal-confirm-btn').textContent = confirmLabel;
+  document.getElementById('modal-title').textContent = type === 'delete' ? 'Confirm Delete' : 'Confirm Mark as Read';
+  document.getElementById('modal-body').textContent  =
+    `This will ${type === 'delete' ? 'move to Trash' : 'mark as read'} ${count} emails from ${label}.`;
+  document.getElementById('modal-confirm-btn').textContent = type === 'delete' ? 'Delete' : 'Mark as Read';
+  document.getElementById('modal-confirm-btn').className   = type === 'delete' ? 'btn btn-danger' : 'btn btn-ink';
   document.getElementById('modal-overlay').classList.add('show');
 }
 
@@ -1142,239 +1161,121 @@ async function modalConfirm() {
   const action = pendingAction;
   closeModal();
   if (!action) return;
-  if (action.type === 'delete') await executeDelete(action.query);
-  else if (action.type === 'read') await executeMarkRead(action.query);
+  if      (action.type === 'delete')      await executeDelete(action.query);
+  else if (action.type === 'read')        await executeMarkRead(action.query);
+  else if (action.type === 'unsubscribe') await executeUnsubscribe(action.senders);
 }
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-function setStatus(el, type, html) {
-  el.className = `status-box ${type} show`;
-  el.innerHTML = html;
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function showProgress(labelText) {
+  document.getElementById('progress-label').innerHTML =
+    `${escHtml(labelText)}<span class="loader-dots"><span>.</span><span>.</span><span>.</span></span>`;
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-status').textContent = 'Collecting messages…';
+  document.getElementById('progress-overlay').classList.add('show');
 }
 
-function appendLog(el, msg) {
-  el.textContent += msg + '\n';
-  el.scrollTop = el.scrollHeight;
+function updateProgress(done, total, statusText) {
+  const pct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  if (statusText) document.getElementById('progress-status').textContent = statusText;
 }
 
-// ── PROGRESS TRACKER ─────────────────────────────────────────────────────────
-const PT_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-function ptScramble(el, target) {
-  const total = target.length * 10;
-  let iter = 0;
-  clearInterval(el._si);
-  el._si = setInterval(() => {
-    el.textContent = target.split('').map((l, i) =>
-      i <= Math.floor(iter / 10) ? l : PT_CHARS[Math.floor(Math.random() * 26)]
-    ).join('');
-    if (++iter > total) { el.textContent = target; clearInterval(el._si); }
-  }, Math.max(25, Math.round(800 / total)));
+function hideProgress() {
+  document.getElementById('progress-overlay').classList.remove('show');
 }
 
-function ptShow(prefix) {
-  const el = document.getElementById(`${prefix}-progress`);
-  const fill = el.querySelector('.pt-bar-fill');
-  fill.className = 'pt-bar-fill collecting';
-  fill.style.width = '';
-  el.querySelector('.pt-time-val').textContent = '—';
-  el.querySelector('.pt-count-val').textContent = '0';
-  el.classList.add('show', 'active');
-  ptScramble(el.querySelector('.pt-banner-text'), 'COLLECTING');
-}
-
-function ptStartProcessing(prefix) {
-  const el = document.getElementById(`${prefix}-progress`);
-  const fill = el.querySelector('.pt-bar-fill');
-  fill.className = 'pt-bar-fill';
-  fill.style.width = '0%';
-  ptScramble(el.querySelector('.pt-banner-text'), 'PROCESSING');
-}
-
-function ptUpdate(prefix, processed, total, startTime) {
-  const el = document.getElementById(`${prefix}-progress`);
-  el.querySelector('.pt-bar-fill').style.width = Math.min(100, Math.round(processed / total * 100)) + '%';
-  el.querySelector('.pt-count-val').textContent = processed.toLocaleString();
-  if (processed > 0) {
-    const elapsed = (Date.now() - startTime) / 1000;
-    const remaining = Math.max(0, Math.round(elapsed / processed * (total - processed)));
-    const m = Math.floor(remaining / 60), s = remaining % 60;
-    el.querySelector('.pt-time-val').textContent = `${m}min ${String(s).padStart(2, '0')}sec`;
-  }
-}
-
-function ptComplete(prefix, total) {
-  const el = document.getElementById(`${prefix}-progress`);
-  el.querySelector('.pt-bar-fill').style.width = '100%';
-  el.querySelector('.pt-count-val').textContent = total.toLocaleString();
-  el.querySelector('.pt-time-val').textContent = '0min 00sec';
-  el.classList.remove('active');
-  ptScramble(el.querySelector('.pt-banner-text'), 'COMPLETE');
-}
-
-function ptHide(prefix) {
-  document.getElementById(`${prefix}-progress`).classList.remove('show', 'active');
-}
-
-// ── SENDER BREAKDOWN ─────────────────────────────────────────────────────────
-const senderState = {};
-
-function parseSender(fromHeader) {
-  const match = fromHeader.match(/^"?([^"<]*?)"?\s*<([^>]+)>$/);
-  if (match) return { name: match[1].trim() || match[2].trim(), email: match[2].trim().toLowerCase() };
-  const plain = fromHeader.trim();
-  return { name: plain, email: plain.toLowerCase() };
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-async function fetchSenderBreakdown(query) {
-  const ids = [];
-  for await (const id of listMessages(query)) {
-    ids.push(id);
-    if (ids.length >= 500) break;
-  }
-  const map = {};
-  const BATCH = 10;
-  for (let i = 0; i < ids.length; i += BATCH) {
-    const chunk = ids.slice(i, i + BATCH);
-    const results = await Promise.all(
-      chunk.map(id => gmailGet(`messages/${id}?format=metadata&metadataHeaders=From`))
-    );
-    if (i + BATCH < ids.length) await new Promise(r => setTimeout(r, 100));
-    for (const msg of results) {
-      const fromVal = (msg.payload?.headers || []).find(h => h.name === 'From')?.value || '';
-      const { name, email } = parseSender(fromVal);
-      if (!map[email]) map[email] = { name, email, count: 0, selected: false };
-      map[email].count++;
-    }
-  }
-  return Object.values(map).sort((a, b) => b.count - a.count);
-}
-
-async function showSenderPanel(prefix, query, type, confirmLabel) {
-  const panel = document.getElementById(`${prefix}-sender-panel`);
-  const status = document.getElementById(`${prefix}-status`);
-  panel.classList.remove('show');
+// ── DELETE ───────────────────────────────────────────────────────────────────
+async function executeDelete(query) {
+  showProgress('Deleting');
   try {
-    const senders = await fetchSenderBreakdown(query);
-    senderState[prefix] = { senders, sortAsc: false, query, type, confirmLabel };
-    document.getElementById(`${prefix}-sender-search`).value = '';
-    document.getElementById(`${prefix}-select-all`).checked = false;
-    document.getElementById(`${prefix}-select-all`).indeterminate = false;
-    document.getElementById(`${prefix}-selected-count`).textContent = '0 selected';
-    document.getElementById(`${prefix}-proceed-btn`).disabled = true;
-    document.getElementById(`${prefix}-sort-btn`).textContent = 'Most first ↓';
-    renderSenderList(prefix);
-    status.className = 'status-box';
-    panel.classList.add('show');
+    const ids = [];
+    for await (const id of listMessages(query)) ids.push(id);
+    document.getElementById('progress-status').textContent = `Moving ${ids.length.toLocaleString()} emails to Trash…`;
+    const t0 = Date.now();
+    await batchModify(ids, ['TRASH'], [], (done, total) => {
+      const elapsed   = (Date.now() - t0) / 1000;
+      const remaining = elapsed > 0 ? Math.max(0, Math.round(elapsed / done * (total - done))) : 0;
+      updateProgress(done, total, `${done.toLocaleString()} / ${total.toLocaleString()} — ${remaining}s remaining`);
+    });
+    hideProgress();
+    showToast(`✓ ${ids.length.toLocaleString()} emails moved to Trash`);
+    await loadSenders();
   } catch (e) {
-    setStatus(status, 'warn', `Error analyzing senders: ${e.message}`);
+    hideProgress();
+    showToast(`Error: ${e.message}`, true);
   }
 }
 
-function renderSenderList(prefix) {
-  const state = senderState[prefix];
-  const list = document.getElementById(`${prefix}-sender-list`);
-  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
-  let senders = [...state.senders];
-  if (search) senders = senders.filter(s => s.name.toLowerCase().includes(search) || s.email.includes(search));
-  if (state.sortAsc) senders.sort((a, b) => a.count - b.count);
-  const visible = senders.slice(0, 20);
-  if (visible.length === 0) {
-    list.innerHTML = '<div class="sender-empty">No senders match your search.</div>';
-    updateSelectedCount(prefix);
-    return;
-  }
-  list.innerHTML = visible.map(s => `
-    <div class="sender-row${s.selected ? ' selected' : ''}" data-email="${escHtml(s.email)}">
-      <input type="checkbox"${s.selected ? ' checked' : ''} onchange="toggleSenderRow('${prefix}', this.closest('.sender-row'))">
-      <div class="sender-info">
-        <span class="sender-name">${escHtml(s.name)}</span>
-        <span class="sender-email">${escHtml(s.email)}</span>
-      </div>
-      <span class="sender-count-badge">${s.count}</span>
-    </div>`).join('');
-  updateSelectedCount(prefix);
-}
-
-function toggleSenderRow(prefix, row) {
-  const email = row.dataset.email;
-  const sender = senderState[prefix].senders.find(s => s.email === email);
-  if (!sender) return;
-  sender.selected = !sender.selected;
-  row.classList.toggle('selected', sender.selected);
-  row.querySelector('input[type="checkbox"]').checked = sender.selected;
-  updateSelectedCount(prefix);
-}
-
-function toggleSelectAll(prefix, checked) {
-  const state = senderState[prefix];
-  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
-  state.senders.forEach(s => {
-    const visible = !search || s.name.toLowerCase().includes(search) || s.email.includes(search);
-    if (visible) s.selected = checked;
-  });
-  renderSenderList(prefix);
-}
-
-function filterSenders(prefix) { renderSenderList(prefix); }
-
-function toggleSenderSort(prefix) {
-  const state = senderState[prefix];
-  state.sortAsc = !state.sortAsc;
-  document.getElementById(`${prefix}-sort-btn`).textContent = state.sortAsc ? 'Least first ↑' : 'Most first ↓';
-  renderSenderList(prefix);
-}
-
-function updateSelectedCount(prefix) {
-  const state = senderState[prefix];
-  const total = state.senders.filter(s => s.selected).length;
-  document.getElementById(`${prefix}-selected-count`).textContent = `${total} selected`;
-  document.getElementById(`${prefix}-proceed-btn`).disabled = total === 0;
-  const search = document.getElementById(`${prefix}-sender-search`).value.toLowerCase();
-  const visible = state.senders.filter(s => !search || s.name.toLowerCase().includes(search) || s.email.includes(search)).slice(0, 20);
-  const allChecked = visible.length > 0 && visible.every(s => s.selected);
-  const someChecked = visible.some(s => s.selected);
-  const cb = document.getElementById(`${prefix}-select-all`);
-  cb.checked = allChecked;
-  cb.indeterminate = !allChecked && someChecked;
-}
-
-async function proceedWithSelected(prefix) {
-  const state = senderState[prefix];
-  const selected = state.senders.filter(s => s.selected);
-  if (selected.length === 0) return;
-  const senderQ = selected.length === 1
-    ? `from:${selected[0].email}`
-    : `{${selected.map(s => `from:${s.email}`).join(' ')}}`;
-  const combinedQuery = `${state.query} ${senderQ}`;
-  const panel = document.getElementById(`${prefix}-sender-panel`);
-  const status = document.getElementById(`${prefix}-status`);
-  panel.classList.remove('show');
-  setStatus(status, 'info', '⏳ Counting emails for selected senders…');
+// ── MARK AS READ ──────────────────────────────────────────────────────────────
+async function executeMarkRead(query) {
+  showProgress('Marking as Read');
   try {
-    const count = await countMessages(combinedQuery);
-    const label = selected.length <= 3 ? selected.map(s => s.name || s.email).join(', ') : `${selected.length} senders`;
-    pendingAction = { type: state.type, query: combinedQuery, count };
-    setStatus(status, 'info', `Found <strong>${count}</strong> emails from <em>${escHtml(label)}</em>.`);
-    showModal(
-      state.type === 'delete' ? '🗑 Confirm Bulk Delete' : '✉️ Confirm Mark as Read',
-      `This will ${state.type === 'delete' ? 'move to Trash' : 'mark as read'} ${count} emails from ${label}. Continue?`,
-      state.confirmLabel
-    );
+    const ids = [];
+    for await (const id of listMessages(query)) ids.push(id);
+    document.getElementById('progress-status').textContent = `Marking ${ids.length.toLocaleString()} emails as read…`;
+    const t0 = Date.now();
+    await batchModify(ids, [], ['UNREAD'], (done, total) => {
+      const elapsed   = (Date.now() - t0) / 1000;
+      const remaining = elapsed > 0 ? Math.max(0, Math.round(elapsed / done * (total - done))) : 0;
+      updateProgress(done, total, `${done.toLocaleString()} / ${total.toLocaleString()} — ${remaining}s remaining`);
+    });
+    hideProgress();
+    showToast(`✓ ${ids.length.toLocaleString()} emails marked as read`);
+    await loadSenders();
   } catch (e) {
-    setStatus(status, 'warn', `Error: ${e.message}`);
-    panel.classList.add('show');
+    hideProgress();
+    showToast(`Error: ${e.message}`, true);
   }
 }
 
-function cancelSenderPanel(prefix) {
-  document.getElementById(`${prefix}-sender-panel`).classList.remove('show');
-  document.getElementById(`${prefix}-status`).className = 'status-box';
-  document.getElementById(`${prefix}-log`).className = 'log';
+// ── UNSUBSCRIBE ───────────────────────────────────────────────────────────────
+async function executeUnsubscribe(targets) {
+  showProgress('Unsubscribing');
+  let success = 0, failed = 0;
+  for (let i = 0; i < targets.length; i++) {
+    const s = targets[i];
+    updateProgress(i, targets.length, `Unsubscribing from ${escHtml(s.name || s.email)}…`);
+    try {
+      if (s.unsubscribe.type === 'mailto') {
+        const [to, qs] = s.unsubscribe.url.split('?');
+        const p        = new URLSearchParams(qs || '');
+        await sendEmail(to, p.get('subject') || 'Unsubscribe', p.get('body') || '');
+        success++;
+      } else if (s.unsubscribe.type === 'https') {
+        window.open(s.unsubscribe.url, '_blank');
+        success++;
+      }
+    } catch { failed++; }
+    await new Promise(r => setTimeout(r, 250));
+  }
+  updateProgress(targets.length, targets.length, 'Done');
+  setTimeout(() => {
+    hideProgress();
+    showToast(
+      failed === 0
+        ? `✓ Unsubscribed from ${success} sender${success !== 1 ? 's' : ''}`
+        : `Unsubscribed ${success}, failed ${failed}`,
+      failed > 0
+    );
+  }, 600);
+}
+
+async function sendEmail(to, subject, body) {
+  const lines = [`To: ${to}`, `Subject: ${subject}`, `Content-Type: text/plain; charset=UTF-8`, ``, body];
+  const raw   = btoa(lines.join('\r\n')).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  await gmailPost('messages/send', { raw });
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent    = msg;
+  t.style.background = isError ? 'var(--danger)' : 'var(--ink)';
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
