@@ -1237,12 +1237,13 @@ async function fetchSenderBreakdown(query) {
     if (ids.length >= 500) break;
   }
   const map = {};
-  const BATCH = 50;
+  const BATCH = 10;
   for (let i = 0; i < ids.length; i += BATCH) {
     const chunk = ids.slice(i, i + BATCH);
     const results = await Promise.all(
       chunk.map(id => gmailGet(`messages/${id}?format=metadata&metadataHeaders=From`))
     );
+    if (i + BATCH < ids.length) await new Promise(r => setTimeout(r, 100));
     for (const msg of results) {
       const fromVal = (msg.payload?.headers || []).find(h => h.name === 'From')?.value || '';
       const { name, email } = parseSender(fromVal);
