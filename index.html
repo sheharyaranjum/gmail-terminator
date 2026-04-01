@@ -523,6 +523,28 @@ input[type="checkbox"] {
   color: var(--muted); margin-top: 0.15rem;
 }
 
+/* ── MOBILE ACTION BAR ──────────────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .action-bar-inner {
+    flex-wrap: wrap;
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    gap: 0.4rem;
+  }
+  .action-count {
+    width: 100%;
+    flex: none;
+  }
+  .action-btns {
+    width: 100%;
+  }
+  .ab-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 0.68rem;
+    padding: 0.42rem 0.3rem;
+  }
+}
+
 /* ── TOAST ──────────────────────────────────────────────────────────────────── */
 #toast {
   position: fixed; bottom: 5.5rem; left: 50%;
@@ -608,6 +630,7 @@ input[type="checkbox"] {
         <div class="tab-pill"        data-cat="spam"       onclick="selectCat(this)">Spam</div>
         <div class="tabs-sep"></div>
         <div class="tab-pill" id="unread-pill" onclick="toggleUnread(this)">Unread</div>
+        <div class="tab-pill" id="subscribed-pill" onclick="toggleSubscribed(this)">Subscriptions</div>
         <div class="tabs-sep"></div>
         <div class="tab-pill"        data-range="3mo"  onclick="selectRange(this)">3 mo</div>
         <div class="tab-pill active" data-range="6mo"  onclick="selectRange(this)">6 mo</div>
@@ -656,7 +679,7 @@ input[type="checkbox"] {
       <div id="empty-state">No senders found for this filter.</div>
 
       <!-- footer note -->
-      <div class="box-footer" id="box-footer">Showing top senders from the most recent 500 emails analyzed.</div>
+      <div class="box-footer" id="box-footer">Counts update in the background to reflect the selected time range.</div>
 
     </div>
 
@@ -686,7 +709,7 @@ input[type="checkbox"] {
       </div>
 
       <div class="ab-wrap">
-        <button class="ab-btn" id="unsub-btn" onclick="confirmAction('unsubscribe')" disabled>Unsubscribe</button>
+        <button class="ab-btn" id="unsub-btn" onclick="doUnsubscribeNow()" disabled>Unsubscribe</button>
         <div class="ab-preview">
           <div class="ab-preview-title">Unsubscribe</div>
           <div class="ab-preview-desc">Auto-unsubscribe from senders that include a detectable unsubscribe link. Shown in blue on rows.</div>
@@ -743,6 +766,8 @@ let senders        = []; // [{name, email, count, selected, unsubscribe}]
 let selectedCat    = 'all';
 let selectedRange  = '6mo';
 let unreadOnly     = false;
+let subscribedOnly = false;
+let _countRefreshId = 0;
 
 // ── QUERY BUILDER ───────────────────────────────────────────────────────────
 function buildQuery() {
@@ -783,6 +808,12 @@ function selectRange(el) {
 function toggleUnread(el) {
   unreadOnly = !unreadOnly;
   el.classList.toggle('active', unreadOnly);
+  renderSenderList();
+}
+
+function toggleSubscribed(el) {
+  subscribedOnly = !subscribedOnly;
+  el.classList.toggle('active', subscribedOnly);
   renderSenderList();
 }
 
@@ -1008,6 +1039,7 @@ async function loadSenders() {
     } else {
       renderSenderList();
       document.getElementById('box-footer').className = 'box-footer show';
+      refreshSenderCounts();
     }
   } catch (e) {
     document.getElementById('loading-state').className = '';
@@ -1025,6 +1057,7 @@ function getFiltered() {
   const q = document.getElementById('sender-search').value.toLowerCase();
   return senders.filter(s => {
     if (unreadOnly && s.unreadCount === 0) return false;
+    if (subscribedOnly && !s.unsubscribe) return false;
     if (q && !s.name.toLowerCase().includes(q) && !s.email.includes(q)) return false;
     return true;
   });
@@ -1063,6 +1096,25 @@ function renderSenderList() {
 }
 
 function filterAndRender() { renderSenderList(); }
+
+async function refreshSenderCounts() {
+  const myId = ++_countRefreshId;
+  const query = buildQuery();
+  for (const s of senders) {
+    if (myId !== _countRefreshId) return;
+    try {
+      const count = await countMessages(`${query} from:${s.email}`);
+      if (myId !== _countRefreshId) return;
+      s.count = count;
+      const row = document.querySelector(`.sender-row[data-email="${CSS.escape(s.email)}"]`);
+      if (row) {
+        const badge = row.querySelector('.count-badge');
+        if (badge) badge.textContent = count;
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+}
 
 function toggleRow(row) {
   const email  = row.dataset.email;
@@ -1230,6 +1282,13 @@ async function executeMarkRead(query) {
 }
 
 // ── UNSUBSCRIBE ───────────────────────────────────────────────────────────────
+async function doUnsubscribeNow() {
+  const selected = senders.filter(s => s.selected);
+  const targets  = selected.filter(s => s.unsubscribe);
+  if (!targets.length) return;
+  await executeUnsubscribe(targets);
+}
+
 async function executeUnsubscribe(targets) {
   showProgress('Unsubscribing');
   let success = 0, failed = 0;
